@@ -21,12 +21,14 @@ public class SerializableAction
     /// </summary>
     [SerializeField]
     private Object m_targetObject;
+    public Object TargetObject { get { return m_targetObject; } set { m_targetObject = value; }}
 
     /// <summary>
     /// Method to call
     /// </summary>
     [SerializeField]
     private SerializableMethod m_targetMethod;
+    public SerializableMethod TargetMethod { get { return m_targetMethod; } set { m_targetMethod = value; }}
 
     /// <summary>
     /// parameters to invoke the method with
@@ -56,4 +58,5 @@ public class SerializableAction
         }
         return null;
     }
+
 }

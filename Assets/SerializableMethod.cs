@@ -91,7 +91,6 @@ public class SerializableMethod
                     methodInfo = methodInfo.MakeGenericMethod(generics);
                 }
 
-
                 if (methodInfo == null)
                 {
                     Debug.LogError("Failed to find method " + name + " on type " + containingType.Name);
@@ -124,5 +123,68 @@ public class SerializableMethod
         }
 
         return true;
+    }
+
+    public override string ToString()
+    {
+        if (MethodInfo == null)
+        {
+            return "Null method";
+        }
+
+        string printData = MethodInfo.Name;
+
+        var paramTypes = ParameterTypes;
+        if (paramTypes.Length > 0)
+        {
+            printData += "[";
+            for (var i = 0; i < paramTypes.Length; i++)
+            {
+                printData += paramTypes[i].Name;
+                if (i != paramTypes.Length - 1)
+                {
+                    printData += ", ";
+                }
+            }
+            printData += "]";
+        }
+        if (MethodInfo.ReturnType != typeof(void))
+        {
+            printData += " => " + MethodInfo.ReturnType.Name;
+        }
+        return printData;
+    }
+
+    protected bool Equals(SerializableMethod other)
+    {
+        return string.Equals(name, other.name) &&
+               Equals(containingType, other.containingType) &&
+               bindingFlags == other.bindingFlags &&
+               isGeneric == other.isGeneric &&
+               Util.ArraysEqual(parameterTypes, other.parameterTypes);
+    }
+
+    public override bool Equals(object obj)
+    {
+        if (ReferenceEquals(null, obj))
+            return false;
+        if (ReferenceEquals(this, obj))
+            return true;
+        if (obj.GetType() != this.GetType())
+            return false;
+        return Equals((SerializableMethod) obj);
+    }
+
+    public override int GetHashCode()
+    {
+        unchecked
+        {
+            var hashCode = (name != null ? name.GetHashCode() : 0);
+            hashCode = (hashCode * 397) ^ (containingType != null ? containingType.GetHashCode() : 0);
+            hashCode = (hashCode * 397) ^ (int) bindingFlags;
+            hashCode = (hashCode * 397) ^ isGeneric.GetHashCode();
+            hashCode = (hashCode * 397) ^ (parameterTypes != null ? parameterTypes.GetHashCode() : 0);
+            return hashCode;
+        }
     }
 }
