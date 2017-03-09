@@ -14,20 +14,40 @@ public class SerializableActionEditor : PropertyDrawer
 
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
     {
-        return base.GetPropertyHeight(property, label) * 3f;
+        var action = (SerializableAction) SerializedPropertyHelper.GetTargetObjectOfProperty(property);
+        if (action.TargetObject == null)
+            return base.GetPropertyHeight(property, label) * 2;
+
+        if(action.TargetMethod == null)
+            return base.GetPropertyHeight(property, label) * 3;
+
+        return base.GetPropertyHeight(property, label) * (3 + action.TargetMethod.ParameterTypes.Length);
     }
 
+    /*
+     * This OnGUI uses the raw object instead of fiddling with the SerializedProperty.
+     * This is because we need to handle things like raw System.Objects and arrays,
+     * both of which SerializedProperties can't handle properly.
+     */
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
         position.height = EditorGUIUtility.singleLineHeight;
         EditorGUI.BeginChangeCheck();
-        SerializableAction action = (SerializableAction) SerializedPropertyHelper.GetTargetObjectOfProperty(property);
+        var action = (SerializableAction) SerializedPropertyHelper.GetTargetObjectOfProperty(property);
 
         EditorGUI.LabelField(position, label);
         EditorGUI.indentLevel++;
 
         position.y += EditorGUIUtility.singleLineHeight;
         action.TargetObject = EditorGUI.ObjectField(position, "Target Object", action.TargetObject, typeof(Object), true);
+
+        if (action.TargetObject == null)
+        {
+            if (EditorGUI.EndChangeCheck())
+                SetDirty(property);
+            EditorGUI.indentLevel--;
+            return;
+        }
 
         var type = action.TargetObject.GetType();
         EnsureMethodsCached(type);
@@ -51,17 +71,25 @@ public class SerializableActionEditor : PropertyDrawer
             }
         }
 
+        
+
+
         EditorGUI.indentLevel--;
         if (EditorGUI.EndChangeCheck())
         {
-            var targetObject = property.serializedObject.targetObject;
-            EditorUtility.SetDirty(targetObject);
-            var asComp = targetObject as Component;
-            if (asComp != null)
-            {
-                EditorSceneManager.MarkSceneDirty(asComp.gameObject.scene);
-            }
+            SetDirty(property);
 
+        }
+    }
+
+    private static void SetDirty(SerializedProperty property)
+    {
+        var targetObject = property.serializedObject.targetObject;
+        EditorUtility.SetDirty(targetObject);
+        var asComp = targetObject as Component;
+        if (asComp != null)
+        {
+            EditorSceneManager.MarkSceneDirty(asComp.gameObject.scene);
         }
     }
 
