@@ -1,125 +1,72 @@
 ﻿using System;
-using System.Reflection;
+using System.Collections;
 using UnityEngine;
+using Random = UnityEngine.Random;
+using UnityEngine.Events;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class Test : MonoBehaviour
 {
-    public SerializableAction serializableAction1;
-    /*public SerializableAction serializableAction2;
-    public SerializableAction serializableAction3;
-    public SerializableAction serializableAction4;
-    public SerializableAction serializableAction5;
-    public SerializableAction serializableAction6;*/
+    public SerializableAction serializableAction;
+    public UnityEvent unityEvent;
 
-    [ContextMenu("SetUp")]
-    public void SetUp()
+    public int sum;
+
+    public void Foo(Person p)
     {
-        var serMet1 = new SerializableMethod(GetType().GetMethod("Foo", BindingFlags.Public | BindingFlags.Instance));
-        serializableAction1 = new SerializableAction(this, serMet1);
-
-        /*var foo2Int = GetType().GetMethod("Foo2",
-                                          BindingFlags.Public | BindingFlags.Instance,
-                                          null,
-                                          CallingConventions.Any,
-                                          new Type[] {typeof(int),},
-                                          null);
-
-        var serMet2 = new SerializableMethod(foo2Int);
-        serializableAction2 = new SerializableAction(this, serMet2, 15);
-
-        var foo2Str = GetType().GetMethod("Foo2",
-                                          BindingFlags.Public | BindingFlags.Instance,
-                                          null,
-                                          CallingConventions.Any,
-                                          new Type[] {typeof(string),},
-                                          null);
-
-        var serMet3 = new SerializableMethod(foo2Str);
-        serializableAction3 = new SerializableAction(this, serMet3, "hello world!");
-
-        var foo3Person = GetType().GetMethod("Foo3").MakeGenericMethod(typeof(Person));
-        var serMet4 = new SerializableMethod(foo3Person);
-        serializableAction4 = new SerializableAction(this, serMet4, new Person("john", 123));
-
-        var foo3bool = GetType().GetMethod("Foo3").MakeGenericMethod(typeof(bool));
-        var serMet5 = new SerializableMethod(foo3bool);
-        serializableAction5 = new SerializableAction(this, serMet5, true);
-
-        var mixNonGen = GetType().GetMethod("MixGenAndOver",
-                                            BindingFlags.Public | BindingFlags.Instance,
-                                            null,
-                                            CallingConventions.Any,
-                                            new Type[] {typeof(int),},
-                                            null);
-        var setMet6 = new SerializableMethod(mixNonGen);
-        serializableAction6 = new SerializableAction(this, setMet6, 22);*/
+        sum += p.Age + p.Name.Length;
     }
 
-    public void Foo()
+    public void Bar(int i)
     {
-        Debug.Log("Foo!");
+        for (int j = 0; j < 10; j++)
+        {
+            if (Random.Range(0, 10) != 0)
+                sum += i;
+            else
+                sum -= j;
+        }
     }
 
-    public void Foo2(int i)
+    public IEnumerator RunTest()
     {
-        Debug.Log("Foo2 int: " + i);
-    }
+        var numRuns = 100000;
 
-    public void Foo2(string s)
-    {
-        Debug.Log("Foo2 string: " + s);
-    }
+        float beforeUnity = Time.realtimeSinceStartup;
+        for (int i = 0; i < numRuns; i++)
+        {
+            unityEvent.Invoke();
+        }
 
-    public void Foo3<T>(T t)
-    {
-        Debug.Log("Foo3, type is " + typeof(T) + ", value is: " + t);
-    }
+        float afterUnity = Time.realtimeSinceStartup;
 
-    public void PartialGen<T>(int i, T t)
-    {
-        Debug.Log("i: " + i + ", t: " + t);
-    }
+        yield return new WaitForSeconds(.1f);
 
-    public void MixGenAndOver(int i)
-    {
-        Debug.Log("non-generic, int is " + i);
-    }
+        float beforeCustom = Time.realtimeSinceStartup;
+        for (int i = 0; i < numRuns; i++)
+        {
+            serializableAction.Invoke();
+        }
 
-    public void MixGenAndOver<T>(T t)
-    {
-        Debug.Log("generic, value is " + t);
-    }
+        float afterCustom = Time.realtimeSinceStartup;
 
-    public string YAY(int i)
-    {
-        return "i as string: " + i;
-    }
-
-    private void Start()
-    {
-        /*Debug.Log("action 1:");
-        serializableAction1.Invoke();
-        Debug.Log("action 2:");
-        serializableAction2.Invoke();
-        Debug.Log("action 3:");
-        serializableAction3.Invoke();
-        Debug.Log("action 4:");
-        serializableAction4.Invoke();
-        Debug.Log("action 5:");
-        serializableAction5.Invoke();
-        Debug.Log("action 6:");
-        serializableAction6.Invoke();*/
+        yield return new WaitForSeconds(.1f);
     }
 
 }
 
-[System.Serializable]
+[Serializable]
 public class Person
 {
     [SerializeField]
     private string name;
     [SerializeField]
     private int age;
+
+    public string Name { get { return name; } }
+    public int Age { get { return Age; } }
 
     public Person(string name, int age)
     {
@@ -132,3 +79,29 @@ public class Person
         return name + ": " + age;
     }
 }
+
+#if UNITY_EDITOR
+
+[CustomEditor(typeof(Test))]
+public class TestEditor : Editor
+{
+
+    private Test script;
+
+    void OnEnable()
+    {
+        script = (Test) target;
+    }
+
+    public override void OnInspectorGUI()
+    {
+        base.OnInspectorGUI();
+        if (GUILayout.Button("Test"))
+        {
+            script.StartCoroutine(script.RunTest());
+        }
+    }
+
+}
+
+#endif

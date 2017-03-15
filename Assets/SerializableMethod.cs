@@ -1,14 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
-[System.Serializable]
+[Serializable]
 public class SerializableMethod
 {
     [SerializeField]
-    private string name;
+    private string methodName;
+    public string MethodName { get { return methodName; }}
     [SerializeField]
     private SerializableSystemType containingType;
     [SerializeField]
@@ -18,16 +18,19 @@ public class SerializableMethod
     [SerializeField]
     private SerializeableParameterType[] parameterTypes;
     public SerializeableParameterType[] ParameterTypes { get { return parameterTypes; } }
+    [SerializeField]
+    private string[] paramterNames;
+    public string[] ParameterNames { get { return paramterNames; }}
 
     public SerializableMethod(MethodInfo method)
     {
         methodInfo = method;
 
-        name = method.Name;
+        methodName = method.Name;
         containingType = method.DeclaringType;
         isGeneric = method.IsGenericMethod;
 
-        parameterTypes = ExtractParameterTypes(method, isGeneric);
+        ExtractParameters(method, isGeneric, out parameterTypes, out paramterNames);
 
         bindingFlags =
             (method.IsPublic ? BindingFlags.Public : BindingFlags.NonPublic) |
@@ -35,14 +38,16 @@ public class SerializableMethod
 
     }
 
-    private SerializeableParameterType[] ExtractParameterTypes(MethodInfo method, bool isGeneric)
+    private void ExtractParameters(MethodInfo method, bool isGeneric, out SerializeableParameterType[] paramTypes, out string[] paramNames)
     {
         var rawParameters = method.GetParameters();
-        var serializedParameters = new SerializeableParameterType[rawParameters.Length];
+        paramTypes = new SerializeableParameterType[rawParameters.Length];
+        paramNames = new string[rawParameters.Length];
 
         for (int i = 0; i < rawParameters.Length; i++)
         {
-            serializedParameters[i] = new SerializeableParameterType(rawParameters[i].ParameterType);
+            paramTypes[i] = new SerializeableParameterType(rawParameters[i].ParameterType);
+            paramNames[i] = rawParameters[i].Name;
         }
 
         if (isGeneric)
@@ -51,10 +56,9 @@ public class SerializableMethod
             var genericParams = genericVersion.GetParameters();
             for (int i = 0; i < genericParams.Length; i++)
             {
-                serializedParameters[i].IsGeneric = genericParams[i].ParameterType.IsGenericParameter;
+                paramTypes[i].IsGeneric = genericParams[i].ParameterType.IsGenericParameter;
             }
         }
-        return serializedParameters;
     }
 
     /// <summary>
@@ -67,7 +71,7 @@ public class SerializableMethod
     {
         get
         {
-            if (methodInfo == null)
+            if (methodInfo == null && !string.IsNullOrEmpty(methodName))
             {
                 Type[] types = new Type[parameterTypes.Length];
                 for (int i = 0; i < types.Length; i++)
@@ -75,7 +79,7 @@ public class SerializableMethod
                     types[i] = parameterTypes[i].SystemType;
                 }
 
-                var allMethods = containingType.SystemType.GetMethods(bindingFlags).Where(method => method.Name == name);
+                var allMethods = containingType.SystemType.GetMethods(bindingFlags).Where(method => method.Name == methodName);
                 foreach (var method in allMethods)
                 {
                     if (ParametersMatch(method.GetParameters(), parameterTypes))
@@ -93,7 +97,7 @@ public class SerializableMethod
 
                 if (methodInfo == null)
                 {
-                    Debug.LogError("Failed to find method " + name + " on type " + containingType.Name);
+                    return null;
                 }
             }
             return methodInfo;
@@ -134,19 +138,20 @@ public class SerializableMethod
 
         string printData = MethodInfo.Name;
 
-        var paramTypes = ParameterTypes;
-        if (paramTypes.Length > 0)
+        if (parameterTypes.Length > 0)
         {
-            printData += "[";
-            for (var i = 0; i < paramTypes.Length; i++)
+            printData += "(";
+            for (var i = 0; i < parameterTypes.Length; i++)
             {
-                printData += paramTypes[i].Name;
-                if (i != paramTypes.Length - 1)
-                {
+                var paramName = parameterTypes[i].Name;
+                if (paramName == "Single")
+                    paramName = "Float"; //why, C#?
+
+                printData += string.Format("{0} {1}", paramName, paramterNames[i]);
+                if (i != parameterTypes.Length - 1)
                     printData += ", ";
-                }
             }
-            printData += "]";
+            printData += ")";
         }
         if (MethodInfo.ReturnType != typeof(void))
         {
@@ -157,7 +162,7 @@ public class SerializableMethod
 
     protected bool Equals(SerializableMethod other)
     {
-        return string.Equals(name, other.name) &&
+        return string.Equals(methodName, other.methodName) &&
                Equals(containingType, other.containingType) &&
                bindingFlags == other.bindingFlags &&
                isGeneric == other.isGeneric &&
@@ -170,7 +175,7 @@ public class SerializableMethod
             return false;
         if (ReferenceEquals(this, obj))
             return true;
-        if (obj.GetType() != this.GetType())
+        if (obj.GetType() != GetType())
             return false;
         return Equals((SerializableMethod) obj);
     }
@@ -179,7 +184,7 @@ public class SerializableMethod
     {
         unchecked
         {
-            var hashCode = (name != null ? name.GetHashCode() : 0);
+            var hashCode = (methodName != null ? methodName.GetHashCode() : 0);
             hashCode = (hashCode * 397) ^ (containingType != null ? containingType.GetHashCode() : 0);
             hashCode = (hashCode * 397) ^ (int) bindingFlags;
             hashCode = (hashCode * 397) ^ isGeneric.GetHashCode();

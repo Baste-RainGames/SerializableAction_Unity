@@ -1,18 +1,23 @@
 ﻿using System;
+using System.Linq.Expressions;
+using Fasterflect;
 using UnityEngine;
+using UnityEngine.Assertions;
 using Object = UnityEngine.Object;
 
-[System.Serializable]
-public class SerializableAction
+[Serializable]
+public class SerializableAction : ISerializationCallbackReceiver
 {
     public SerializableAction(Object targetObject, SerializableMethod targetMethod, params object[] parameters)
     {
+        Assert.AreEqual(targetMethod.ParameterTypes.Length, parameters.Length);
+
         m_targetObject = targetObject;
         m_targetMethod = targetMethod;
         m_parameters = new SerializableParameter[parameters.Length];
         for (int i = 0; i < m_parameters.Length; i++)
         {
-            m_parameters[i] = new SerializableParameter(parameters[i], parameters[i].GetType());
+            m_parameters[i] = new SerializableParameter(parameters[i], parameters[i].GetType(), targetMethod.ParameterNames[i]);
         }
     }
 
@@ -35,28 +40,29 @@ public class SerializableAction
     /// </summary>
     [SerializeField]
     private SerializableParameter[] m_parameters;
+    public SerializableParameter[] Parameters { get { return m_parameters; } set { m_parameters = value; }}
 
-    /// <summary>
-    /// Invokes the action
-    /// </summary>
+    private object[] paramList;
+    private MethodInvoker invoker;
+
     public void Invoke()
     {
-        var paramList = new object[m_parameters.Length];
+        invoker.Invoke(m_targetObject, paramList);
+    }
+
+    public void OnBeforeSerialize() { }
+
+    public void OnAfterDeserialize()
+    {
+        paramList = new object[m_parameters.Length];
+        var paramTypeList = new Type[m_parameters.Length];
         for (int i = 0; i < paramList.Length; i++)
         {
             paramList[i] = m_parameters[i].UnpackParameter();
+            paramTypeList[i] = m_parameters[i].ParameterValueType;
         }
 
-        m_targetMethod.MethodInfo.Invoke(m_targetObject, paramList);
-    }
+        invoker = TargetObject.GetType().DelegateForInvoke(TargetMethod.MethodName, paramTypeList);
 
-    public static object GetDefault(Type type)
-    {
-        if(type.IsValueType)
-        {
-            return Activator.CreateInstance(type);
-        }
-        return null;
     }
-
 }

@@ -39,7 +39,7 @@ public static class Util
             else
             {
                 if (printFunc == null)
-                    builder.Append(t.ToString());
+                    builder.Append(t);
                 else
                     builder.Append(printFunc(t));
             }
@@ -68,7 +68,7 @@ public static class Util
         for (int i = 0; i < a1.Length; i++)
         {
             var a1Member = a1[i];
-            var a2Member = a1[i];
+            var a2Member = a2[i];
 
             if (a1Member == null)
             {
@@ -82,6 +82,7 @@ public static class Util
             }
 
         }
+
         return true;
     }
 

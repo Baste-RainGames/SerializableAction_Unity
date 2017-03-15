@@ -1,4 +1,6 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Collections;
+using System.Reflection;
 using UnityEditor;
 
 public static class SerializedPropertyHelper
@@ -13,7 +15,7 @@ public static class SerializedPropertyHelper
             if (element.Contains("["))
             {
                 var elementName = element.Substring(0, element.IndexOf("["));
-                var index = System.Convert.ToInt32(element.Substring(element.IndexOf("[")).Replace("[", "").Replace("]", ""));
+                var index = Convert.ToInt32(element.Substring(element.IndexOf("[")).Replace("[", "").Replace("]", ""));
                 obj = GetValue_Imp(obj, elementName, index);
             }
             else
@@ -47,7 +49,7 @@ public static class SerializedPropertyHelper
 
     private static object GetValue_Imp(object source, string name, int index)
     {
-        var enumerable = GetValue_Imp(source, name) as System.Collections.IEnumerable;
+        var enumerable = GetValue_Imp(source, name) as IEnumerable;
         if (enumerable == null)
             return null;
         var enm = enumerable.GetEnumerator();

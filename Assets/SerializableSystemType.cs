@@ -4,9 +4,11 @@
 //
 // Written by Bryan Keiren (http://www.bryankeiren.com)
 
+using System;
 using UnityEngine;
+using Object = System.Object;
 
-[System.Serializable]
+[Serializable]
 public class SerializableSystemType
 {
     [SerializeField]
@@ -24,8 +26,8 @@ public class SerializableSystemType
 
     public string AssemblyName { get { return m_AssemblyName; } }
 
-    private System.Type m_SystemType;
-    public System.Type SystemType
+    private Type m_SystemType;
+    public Type SystemType
     {
         get
         {
@@ -39,10 +41,10 @@ public class SerializableSystemType
 
     private void GetSystemType()
     {
-        m_SystemType = System.Type.GetType(m_AssemblyQualifiedName);
+        m_SystemType = Type.GetType(m_AssemblyQualifiedName);
     }
 
-    public SerializableSystemType(System.Type _SystemType)
+    public SerializableSystemType(Type _SystemType)
     {
         m_SystemType = _SystemType;
         m_Name = _SystemType.Name;
@@ -50,26 +52,25 @@ public class SerializableSystemType
         m_AssemblyName = _SystemType.Assembly.FullName;
     }
 
-    public override bool Equals(System.Object obj)
+    public override bool Equals(Object obj)
     {
         SerializableSystemType temp = obj as SerializableSystemType;
         if ((object) temp == null)
         {
             return false;
         }
-        return this.Equals(temp);
+        return Equals(temp);
     }
 
     public bool Equals(SerializableSystemType _Object)
     {
-        //return m_AssemblyQualifiedName.Equals(_Object.m_AssemblyQualifiedName);
-        return _Object.SystemType.Equals(SystemType);
+        return SystemType.Equals(_Object.SystemType);
     }
 
     public static bool operator ==(SerializableSystemType a, SerializableSystemType b)
     {
         // If both are null, or both are same instance, return true.
-        if (System.Object.ReferenceEquals(a, b))
+        if (ReferenceEquals(a, b))
         {
             return true;
         }
@@ -93,12 +94,12 @@ public class SerializableSystemType
         return SystemType.GetHashCode();
     }
 
-    public static implicit operator SerializableSystemType(System.Type type)
+    public static implicit operator SerializableSystemType(Type type)
     {
         return new SerializableSystemType(type);
     }
 
-    public static implicit operator System.Type(SerializableSystemType type)
+    public static implicit operator Type(SerializableSystemType type)
     {
         return type.SystemType;
     }

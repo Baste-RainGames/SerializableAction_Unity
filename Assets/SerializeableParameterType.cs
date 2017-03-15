@@ -10,4 +10,9 @@ public class SerializeableParameterType : SerializableSystemType
 
     public SerializeableParameterType(Type _SystemType) : base(_SystemType)
     { }
+
+    public override string ToString()
+    {
+        return Name;
+    }
 }
