@@ -85,7 +85,7 @@ public class SerializableActionDrawer : PropertyDrawer
             if (newNameIdx == 0)
             {
                 action.TargetMethod = null;
-                action.Parameters = new SerializableParameter[0];
+                action.Arguments = new SerializableArgument[0];
             }
             else
             {
@@ -93,9 +93,9 @@ public class SerializableActionDrawer : PropertyDrawer
                 var targetMethod = methods[newNameIdx - 1];
                 action.TargetMethod = targetMethod;
 
-                var oldParameters = action.Parameters;
-                action.Parameters = new SerializableParameter[action.TargetMethod.ParameterTypes.Length];
-                for (int i = 0; i < action.Parameters.Length; i++)
+                var oldParameters = action.Arguments;
+                action.Arguments = new SerializableArgument[action.TargetMethod.ParameterTypes.Length];
+                for (int i = 0; i < action.Arguments.Length; i++)
                 {
                     object value;
                     if (oldMethod != null && oldParameters != null && i < oldParameters.Length &&
@@ -108,9 +108,9 @@ public class SerializableActionDrawer : PropertyDrawer
                         value = DefaultValueFinder.CreateDefaultFor(targetMethod.ParameterTypes[i].SystemType);
                     }
 
-                    action.Parameters[i] = new SerializableParameter(value,
-                                                                     targetMethod.ParameterTypes[i].SystemType,
-                                                                     targetMethod.ParameterNames[i]);
+                    action.Arguments[i] = new SerializableArgument(value,
+                                                                   targetMethod.ParameterTypes[i].SystemType,
+                                                                   targetMethod.ParameterNames[i]);
                 }
             }
         }
@@ -126,7 +126,7 @@ public class SerializableActionDrawer : PropertyDrawer
         if (EditorGUI.EndChangeCheck())
             property.SetDirty();
 
-        if (action.Parameters.Length == 0)
+        if (action.Arguments.Length == 0)
             return;
 
         position = NextPosition(position, EditorGUIUtility.singleLineHeight);
@@ -136,10 +136,11 @@ public class SerializableActionDrawer : PropertyDrawer
 
         //Updating the serializedObject here syncs it with the changes from above
         property.serializedObject.Update();
-        var parameters = property.FindPropertyRelative("m_parameters");
+        var parameters = property.FindPropertyRelative("arguments");
         for (int i = 0; i < parameters.arraySize; i++)
         {
-            var positionHeight = SerializableParameterDrawer.GetHeightForType(action.Parameters[i].DeclaredParameterType.SystemType, EditorGUIUtility.singleLineHeight);
+            var positionHeight = SerializableParameterDrawer.GetHeightForType(action.Arguments[i].ParameterType.SystemType,
+                                                                              EditorGUIUtility.singleLineHeight);
             position = NextPosition(position, positionHeight);
             EditorGUI.PropertyField(position, parameters.GetArrayElementAtIndex(i), true);
         }

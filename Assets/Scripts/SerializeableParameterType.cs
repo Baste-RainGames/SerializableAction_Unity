@@ -1,6 +1,9 @@
 using System;
 using UnityEngine;
 
+/// <summary>
+/// Serializable Parameter type, which contains both the type of the parameter, and an IsGeneric flag.
+/// </summary>
 [Serializable]
 public class SerializeableParameterType : SerializableSystemType
 {

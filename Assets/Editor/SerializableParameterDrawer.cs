@@ -3,21 +3,21 @@ using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-[CustomPropertyDrawer(typeof(SerializableParameter))]
+[CustomPropertyDrawer(typeof(SerializableArgument))]
 public class SerializableParameterDrawer : PropertyDrawer
 {
 
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
     {
-        var parameter = (SerializableParameter) SerializedPropertyHelper.GetTargetObjectOfProperty(property);
-        var type = parameter.DeclaredParameterType.SystemType;
+        var parameter = (SerializableArgument) SerializedPropertyHelper.GetTargetObjectOfProperty(property);
+        var type = parameter.ParameterType.SystemType;
         return GetHeightForType(type, base.GetPropertyHeight(property, label));
     }
 
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
-        var parameter = (SerializableParameter) SerializedPropertyHelper.GetTargetObjectOfProperty(property);
-        var type = parameter.DeclaredParameterType.SystemType;
+        var parameter = (SerializableArgument) SerializedPropertyHelper.GetTargetObjectOfProperty(property);
+        var type = parameter.ParameterType.SystemType;
         var obj = parameter.UnpackParameter();
         label = new GUIContent(parameter.Name);
         EditorGUI.BeginChangeCheck();
@@ -51,7 +51,7 @@ public class SerializableParameterDrawer : PropertyDrawer
 
         if (EditorGUI.EndChangeCheck())
         {
-            parameter.SetParameterValue(obj);
+            parameter.SetArgumentValue(obj);
             property.SetDirty();
         }
     }

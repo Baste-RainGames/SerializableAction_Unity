@@ -3,12 +3,15 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
+/// <summary>
+/// Serializable wrapper for a MethodInfo.
+/// </summary>
 [Serializable]
 public class SerializableMethod
 {
     [SerializeField]
     private string methodName;
-    public string MethodName { get { return methodName; }}
+
     [SerializeField]
     private SerializableSystemType containingType;
     [SerializeField]
@@ -17,10 +20,25 @@ public class SerializableMethod
     private bool isGeneric;
     [SerializeField]
     private SerializeableParameterType[] parameterTypes;
-    public SerializeableParameterType[] ParameterTypes { get { return parameterTypes; } }
     [SerializeField]
     private string[] paramterNames;
-    public string[] ParameterNames { get { return paramterNames; }}
+
+    /// <summary>
+    /// Name of the method
+    /// </summary>
+    public string MethodName { get { return methodName; } }
+
+    /// <summary>
+    /// The parameter types of the method.
+    /// If the wrapped method is Foo(int i, string s), this array is [int, string]
+    /// </summary>
+    public SerializeableParameterType[] ParameterTypes { get { return parameterTypes; } }
+
+    /// <summary>
+    /// The parameter names of the method.
+    /// If the wrapped method is Foo(int i, string s), this array is [i, s]
+    /// </summary>
+    public string[] ParameterNames { get { return paramterNames; } }
 
     public SerializableMethod(MethodInfo method)
     {
@@ -61,11 +79,6 @@ public class SerializableMethod
         }
     }
 
-    /// <summary>
-    /// @TODO: Replace this with a delegate. See:
-    /// http://blogs.msmvps.com/jonskeet/2008/08/09/making-reflection-fly-and-exploring-delegates/
-    /// http://stackoverflow.com/questions/10313979/methodinfo-invoke-performance-issue
-    /// </summary>
     private MethodInfo methodInfo;
     public MethodInfo MethodInfo
     {
