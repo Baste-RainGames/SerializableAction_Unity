@@ -1,0 +1,9 @@
+License for this: Probably MIT?
+
+License for Fullserializer: MIT license
+Download for Fullserializer: https://github.com/jacobdufault/fullserializer
+
+License for Fasterflect: Apache 2.0
+Download for fasterflect: https://www.codeproject.com/Articles/38840/Fasterflect-a-fast-and-simple-API-for-Reflection-i
+
+Starting off point for serializing types and method provided by Bryan Keiren (http://www.bryankeiren.com), available here:http://bryankeiren.com/files_public/UnityScripts/SerializableSystemType.cs
