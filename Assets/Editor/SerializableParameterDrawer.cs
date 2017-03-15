@@ -42,6 +42,8 @@ public class SerializableParameterDrawer : PropertyDrawer
             obj = EditorGUI.IntField(position, label, (int) obj);
         else if (type == typeof(string))
             obj = EditorGUI.TextField(position, label, (string) obj);
+        else if (type == typeof(bool))
+            obj = EditorGUI.Toggle(position, label, (bool) obj);
         else if (type == typeof(Rect))
             obj = EditorGUI.RectField(position, label, (Rect) obj);
         else if (typeof(Object).IsAssignableFrom(type))

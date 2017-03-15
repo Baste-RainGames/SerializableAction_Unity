@@ -11,15 +11,32 @@ public class SerializableActionDrawer : PropertyDrawer
     private static Dictionary<Type, List<SerializableMethod>> typeToMethod = new Dictionary<Type, List<SerializableMethod>>();
     private static Dictionary<Type, string[]> typeToMethodNames = new Dictionary<Type, string[]>();
 
+
     public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
     {
-        var defaultHeight = base.GetPropertyHeight(property, label);
+        return FindSerializableActionHeight(property, label);
+    }
+
+    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+    {
+        position.height = EditorGUIUtility.singleLineHeight;
+        EditorGUI.LabelField(position, label);
+        EditorGUI.indentLevel++;
+        position = NextPosition(position, EditorGUIUtility.singleLineHeight);
+        DrawSerializableAction(position, property);
+        EditorGUI.indentLevel--;
+    }
+
+    public static float FindSerializableActionHeight(SerializedProperty property, GUIContent label)
+    {
+        float defaultHeight = EditorGUIUtility.singleLineHeight + 1;
         var action = (SerializableAction) SerializedPropertyHelper.GetTargetObjectOfProperty(property);
 
         if (action.TargetObject == null)
-            return defaultHeight * 2;
+            return defaultHeight * 2; //label + object field
 
-        var propHeightWithMethod = defaultHeight * 3;
+        //label + object field + method field. 1 less if there's no label
+        var propHeightWithMethod = defaultHeight * (label == GUIContent.none ? 2 : 3);
         if (action.TargetMethod == null || action.TargetMethod.MethodInfo == null)
             return propHeightWithMethod;
 
@@ -27,38 +44,36 @@ public class SerializableActionDrawer : PropertyDrawer
         if (parameterCount == 0)
             return propHeightWithMethod;
 
-        var finalPropHeight = propHeightWithMethod;
+        //add 1 for the "Parameters:" header
+        var finalPropHeight = propHeightWithMethod + defaultHeight;
         for (var i = 0; i < action.TargetMethod.ParameterTypes.Length; i++)
         {
             var parameterType = action.TargetMethod.ParameterTypes[i];
             finalPropHeight += SerializableParameterDrawer.GetHeightForType(parameterType.SystemType, defaultHeight);
         }
 
-        return finalPropHeight + 30;
+        return finalPropHeight;
     }
 
     /*
      * This OnGUI uses the raw object instead of fiddling with the SerializedProperty.
      * This is because we need to handle things like raw System.Objects and arrays,
      * both of which SerializedProperties can't handle properly.
+     *
+     * static so the list drawer can use it
      */
-    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+    public static void DrawSerializableAction(Rect position, SerializedProperty property)
     {
-        position.height = EditorGUIUtility.singleLineHeight;
         EditorGUI.BeginChangeCheck();
+        position.height = EditorGUIUtility.singleLineHeight;
         var action = (SerializableAction) SerializedPropertyHelper.GetTargetObjectOfProperty(property);
 
-        EditorGUI.LabelField(position, label);
-        EditorGUI.indentLevel++;
-
-        position = NextPosition(position, EditorGUIUtility.singleLineHeight);
         action.TargetObject = EditorGUI.ObjectField(position, "Target Object", action.TargetObject, typeof(Object), true);
 
         if (action.TargetObject == null)
         {
             if (EditorGUI.EndChangeCheck())
                 property.SetDirty();
-            EditorGUI.indentLevel--;
             return;
         }
 
@@ -119,7 +134,6 @@ public class SerializableActionDrawer : PropertyDrawer
         {
             if (EditorGUI.EndChangeCheck())
                 property.SetDirty();
-            EditorGUI.indentLevel--;
             return;
         }
 
@@ -148,10 +162,9 @@ public class SerializableActionDrawer : PropertyDrawer
 
         EditorGUI.indentLevel--;
         EditorGUI.indentLevel--;
-        EditorGUI.indentLevel--;
     }
 
-    private Rect NextPosition(Rect currentPosition, float nextPositionHeight)
+    private static Rect NextPosition(Rect currentPosition, float nextPositionHeight)
     {
         currentPosition.y += currentPosition.height + 1;
         currentPosition.height = nextPositionHeight;

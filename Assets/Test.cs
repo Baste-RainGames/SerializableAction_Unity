@@ -9,18 +9,38 @@ using UnityEditor;
 
 public class Test : MonoBehaviour
 {
-    public SerializableAction serializableAction;
-
+    public SerializableAction serializableAction1;
+    public int foo;
+    public SerializableAction serializableAction2;
     public int sum;
+    public int bar;
+    public UnityEvent unityAction;
+    public int sum2;
+    public SerializableActionList serializableActions;
 
     public void Foo(Person p)
     {
         sum += p.Age + p.Name.Length;
     }
 
+    public void Bar(int i)
+    { }
+
+    public void Bar(Rect r)
+    { }
+
+    public void Bar(string s)
+    { }
+
+    public void Bar(float f, bool b)
+    { }
+
+    public void Bar(int i1, int i2, int i3, int i4, int i5, int i6, int i7, int i8, int i9, int i10, int i11, int i12)
+    { }
+
     public void RunTest()
     {
-        serializableAction.Invoke();
+        serializableAction1.Invoke();
     }
 
 }
