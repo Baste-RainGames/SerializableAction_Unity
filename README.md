@@ -17,7 +17,6 @@ For example, if you want a script that does something interesting when the playe
 ```c#
 public class PlayerEnterAction : MonoBehaviour
 {
-
     [SerializeField]
     private SerializableAction action;
 
@@ -30,6 +29,11 @@ public class PlayerEnterAction : MonoBehaviour
     }
 }
 ```
+
+
+This allows you to assign methods in the inspector:
+
+![readme example](https://github.com/Baste-RainGames/SerializableAction_Unity/blob/master/readme_example.png)
 
 ## Installation
 
