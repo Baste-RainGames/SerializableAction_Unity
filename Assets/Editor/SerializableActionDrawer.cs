@@ -8,6 +8,10 @@ namespace SerializableActions.Internal {
     public class SerializableActionDrawer : PropertyDrawer {
 
         private ReorderableList reorderable;
+        // The cache is not used for optimization, but to work around problems where Unity
+        // double-iterated the property, causing it to try to draw other properties instead of
+        // the SerializableAction
+        private Dictionary<int, float> cachedHeights = new Dictionary<int, float>();
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label) {
             if (reorderable == null)
@@ -23,33 +27,28 @@ namespace SerializableActions.Internal {
             reorderable.DoList(position);
         }
 
-        private Dictionary<int, float> cachedHeights = new Dictionary<int, float>();
-
         private void CreateReorderable(SerializedProperty property, GUIContent label) {
             var actionsProp = property.FindPropertyRelative("actions");
             var defaults = new ReorderableList.Defaults();
 
             reorderable = new ReorderableList(property.serializedObject, actionsProp);
             reorderable.drawHeaderCallback = rect => EditorGUI.LabelField(rect, label);
-            reorderable.drawElementCallback = (rect, index, active, focused) =>
+            reorderable.drawElementCallback = (rect, index, active, focused) => {
+                rect.y += 2;
+                rect.height -= 2;
                 SerializableAction_SingleDrawer.DrawSerializableAction(
                     rect, actionsProp.GetArrayElementAtIndex(index)
                 );
+            };
             reorderable.elementHeightCallback = index => {
                 var height = SerializableAction_SingleDrawer.FindSerializableActionHeight(
-                            actionsProp.GetArrayElementAtIndex(index), GUIContent.none) + 2f;
+                            actionsProp.GetArrayElementAtIndex(index), GUIContent.none) + 4f;
                 cachedHeights[index] = height;
                 return height;
             };
             reorderable.showDefaultBackground = true;
 
             reorderable.drawElementBackgroundCallback = (rect, index, active, focused) => {
-                //Trying to call this causes Unity's editor to somehow keep iterating the parent property, and
-                //GetArrayElementAtIndex will return the next property (so the property BELOW THE SerializableAction IN THE INSPECTOR)
-                //So the value is cached instead
-                /*rect.height = SerializableAction_SingleDrawer.FindSerializableActionHeight(
-                                  actionsProp.GetArrayElementAtIndex(index), GUIContent.none) + 2f;*/
-
                 var rectHeight = EditorGUIUtility.singleLineHeight;
                 float height;
                 if (cachedHeights.TryGetValue(index, out height))
