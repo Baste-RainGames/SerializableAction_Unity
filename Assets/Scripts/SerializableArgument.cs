@@ -3,142 +3,134 @@ using FullSerializer;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-/// <summary>
-/// This is a serializable wrapper for an argument. It contains both the value of the argument,
-/// and information about the parameter the argument is for.
-/// </summary>
-[Serializable]
-public class SerializableArgument
-{
-    private static readonly fsSerializer _serializer = new fsSerializer();
-
-    [SerializeField]
-    private string parameterName;
-    [SerializeField]
-    private SerializableSystemType parameterType;
-    [SerializeField]
-    private SerializableSystemType argumentType;
-
+namespace SerializableActions.Internal {
     /// <summary>
-    /// Name of the parameter in the method declaration. Only used for display purposes
+    /// This is a serializable wrapper for an argument. It contains both the value of the argument,
+    /// and information about the parameter the argument is for.
     /// </summary>
-    public string Name { get { return parameterName; } }
+    [Serializable]
+    public class SerializableArgument {
+        private static readonly fsSerializer _serializer = new fsSerializer();
 
-    /// <summary>
-    /// The type of the parameter in the method declaration
-    /// </summary>
-    public SerializableSystemType ParameterType { get { return parameterType; } }
+        [SerializeField]
+        private string parameterName;
+        [SerializeField]
+        private SerializableSystemType parameterType;
+        [SerializeField]
+        private SerializableSystemType argumentType;
 
-    /// <summary>
-    /// The type of the serialized argument. It's always assignable to ParameterType
-    /// </summary>
-    public SerializableSystemType ArgumentType { get { return argumentType; } }
+        /// <summary>
+        /// Name of the parameter in the method declaration. Only used for display purposes
+        /// </summary>
+        public string Name { get { return parameterName; } }
 
-    /// <summary>
-    /// Is the argument a UnityEngine.Object? In that case, we insert it into a ScriptableObject for serialization.
-    /// </summary>
-    [SerializeField]
-    private bool isUnityObject;
+        /// <summary>
+        /// The type of the parameter in the method declaration
+        /// </summary>
+        public SerializableSystemType ParameterType { get { return parameterType; } }
 
-    /// <summary>
-    /// Serialized JSON version of the argument. This is how the argument is serialized if it is not an UnityEngine.Object.
-    /// If the argument is a UnityEngine.Object, this is an empty string
-    /// </summary>
-    [SerializeField]
-    private string paramAsJson;
+        /// <summary>
+        /// The type of the serialized argument. It's always assignable to ParameterType
+        /// </summary>
+        public SerializableSystemType ArgumentType { get { return argumentType; } }
 
-    /// <summary>
-    /// A wrapper for the argument. This is how the argument is serialized if it is an UnityEngine.Object.
-    /// If the argument is something else, this is null
-    /// </summary>
-    [SerializeField]
-    private UnityEngineObjectWrapper objectWrapper;
+        /// <summary>
+        /// Is the argument a UnityEngine.Object? In that case, we insert it into a ScriptableObject for serialization.
+        /// </summary>
+        [SerializeField]
+        private bool isUnityObject;
 
-    /// <summary>
-    /// The runtime value of the argument.
-    /// </summary>
-    private object argumentValue;
+        /// <summary>
+        /// Serialized JSON version of the argument. This is how the argument is serialized if it is not an UnityEngine.Object.
+        /// If the argument is a UnityEngine.Object, this is an empty string
+        /// </summary>
+        [SerializeField]
+        private string paramAsJson;
 
-    public SerializableArgument(object argument, Type parameterType, string parameterName)
-    {
-        this.parameterType = parameterType;
-        this.parameterName = parameterName;
+        /// <summary>
+        /// A wrapper for the argument. This is how the argument is serialized if it is an UnityEngine.Object.
+        /// If the argument is something else, this is null
+        /// </summary>
+        [SerializeField]
+        private UnityEngineObjectWrapper objectWrapper;
 
-        argumentType = argument == null ? parameterType : argument.GetType();
-        SetArgumentValue(argument);
-    }
+        /// <summary>
+        /// The runtime value of the argument.
+        /// </summary>
+        private object argumentValue;
 
-    /// <returns>The runtime value of the argument</returns>
-    public object UnpackParameter()
-    {
-        if (argumentValue == null)
-        {
-            if (isUnityObject)
-            {
-                argumentValue = objectWrapper.objectReference;
-            }
-            else
-            {
-                var parsed = fsJsonParser.Parse(paramAsJson);
-                _serializer.TryDeserialize(parsed, argumentType.SystemType, ref argumentValue).AssertSuccess();
-            }
+        public SerializableArgument(object argument, Type parameterType, string parameterName) {
+            this.parameterType = parameterType;
+            this.parameterName = parameterName;
+
+            argumentType = argument == null ? parameterType : argument.GetType();
+            SetArgumentValue(argument);
         }
-        return argumentValue;
-    }
 
-    /// <summary>
-    /// Set the value of the serialized argument.
-    /// Note that this runs the serialization process, so it is not fast.
-    /// </summary>
-    /// <param name="argument">Argument to set</param>
-    /// <exception cref="ArgumentException">If the argument is not assignable to the parameter type</exception>
-    public void SetArgumentValue(object argument)
-    {
-        if (parameterType.SystemType.IsValueType)
-        {
+        /// <returns>The runtime value of the argument</returns>
+        public object UnpackParameter() {
+            if (argumentValue == null) {
+                if (isUnityObject) {
+                    argumentValue = objectWrapper.objectReference;
+                }
+                else {
+                    var parsed = fsJsonParser.Parse(paramAsJson);
+                    _serializer.TryDeserialize(parsed, argumentType.SystemType, ref argumentValue).AssertSuccess();
+                }
+            }
+            return argumentValue;
+        }
+
+        /// <summary>
+        /// Set the value of the serialized argument.
+        /// Note that this runs the serialization process, so it is not fast.
+        /// </summary>
+        /// <param name="argument">Argument to set</param>
+        /// <exception cref="ArgumentException">If the argument is not assignable to the parameter type</exception>
+        public void SetArgumentValue(object argument) {
+            if (parameterType.SystemType.IsValueType) {
+                if (argument == null)
+                    throw new ArgumentException("Trying to set null as parameter value for a SerializeableParameter, but the parameter's type is the " +
+                                                "value type " + parameterType.Name + "!");
+
+                if (argument.GetType() != parameterType.SystemType)
+                    throw new ArgumentException("Trying to assign " + argument + " of value type " + argument.GetType() +
+                                                " to a SerializeableParameter that expects a value" +
+                                                "of value type " + parameterType.Name);
+            }
+            else {
+                if (argument != null && !parameterType.SystemType.IsInstanceOfType(argument))
+                    throw new ArgumentException("Trying to assign " + argument + " of type " + argument.GetType() +
+                                                " to SerializeableParameter expecting type " +
+                                                parameterType.Name + ", which is not valid! Use the type or a subtype");
+            }
+
             if (argument == null)
-                throw new ArgumentException("Trying to set null as parameter value for a SerializeableParameter, but the parameter's type is the " +
-                                            "value type " + parameterType.Name + "!");
+                argumentType = parameterType;
+            else
+                argumentType = argument.GetType();
 
-            if (argument.GetType() != parameterType.SystemType)
-                throw new ArgumentException("Trying to assign " + argument + " of value type " + argument.GetType() + " to a SerializeableParameter that expects a value" +
-                                            "of value type " + parameterType.Name);
-        }
-        else
-        {
-            if (argument != null && !parameterType.SystemType.IsInstanceOfType(argument))
-                throw new ArgumentException("Trying to assign " + argument + " of type " + argument.GetType() + " to SerializeableParameter expecting type " +
-                                            parameterType.Name + ", which is not valid! Use the type or a subtype");
-        }
-
-        if (argument == null)
-            argumentType = parameterType;
-        else
-            argumentType = argument.GetType();
-
-        argumentValue = argument;
-        isUnityObject = argument is Object;
-        if (isUnityObject)
-        {
-            paramAsJson = "";
-            objectWrapper = ScriptableObject.CreateInstance<UnityEngineObjectWrapper>();
-            objectWrapper.objectReference = argument as UnityEngine.Object;
-        }
-        else
-        {
-            if (objectWrapper != null)
-            {
-                if (Application.isPlaying)
-                    Object.Destroy(objectWrapper);
-                else
-                    Object.DestroyImmediate(objectWrapper);
+            argumentValue = argument;
+            isUnityObject = argument is Object;
+            if (isUnityObject) {
+                paramAsJson = "";
+                objectWrapper = ScriptableObject.CreateInstance<UnityEngineObjectWrapper>();
+                objectWrapper.objectReference = argument as UnityEngine.Object;
             }
+            else {
+                if (objectWrapper != null) {
+                    if (Application.isPlaying)
+                        Object.Destroy(objectWrapper);
+                    else
+                        Object.DestroyImmediate(objectWrapper);
+                }
 
-            objectWrapper = null;
-            fsData data;
-            _serializer.TrySerialize(argumentType, argument, out data).AssertSuccess();
-            paramAsJson = fsJsonPrinter.CompressedJson(data);
+                objectWrapper = null;
+                fsData data;
+                _serializer.TrySerialize(argumentType, argument, out data).AssertSuccess();
+                paramAsJson = fsJsonPrinter.CompressedJson(data);
+            }
         }
-    }
 
+    }
 }

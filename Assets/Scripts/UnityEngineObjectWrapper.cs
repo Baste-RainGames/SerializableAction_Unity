@@ -1,6 +1,5 @@
-using UnityEngine;
-
-public class UnityEngineObjectWrapper : ScriptableObject
-{
-    public UnityEngine.Object objectReference;
+namespace SerializableActions.Internal {
+    public class UnityEngineObjectWrapper : UnityEngine.ScriptableObject {
+        public UnityEngine.Object objectReference;
+    }
 }

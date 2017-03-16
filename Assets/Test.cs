@@ -1,22 +1,16 @@
 ﻿using System;
-using System.Collections;
 using UnityEngine;
-using Random = UnityEngine.Random;
 using UnityEngine.Events;
+using SerializableActions;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
 public class Test : MonoBehaviour
 {
-    public SerializableAction serializableAction1;
-    public int foo;
-    public SerializableAction serializableAction2;
-    public int sum;
-    public int bar;
     public UnityEvent unityAction;
-    public int sum2;
-    public SerializableActionList serializableActions;
+    public SerializableAction serializableAction;
+    public int sum;
 
     public void Foo(Person p)
     {
@@ -40,7 +34,7 @@ public class Test : MonoBehaviour
 
     public void RunTest()
     {
-        serializableAction1.Invoke();
+        serializableAction.Invoke();
     }
 
 }
