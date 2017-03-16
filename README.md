@@ -48,16 +48,26 @@ To be able to assign a method in the inspector, all of the parameters of that me
 
 Ideally, Unity's PropertyField could be used to draw arbitrary serialized data. This requires a SerializedProperty, though, and it seems impossible to create those without knowing the property's type at compile time. If somebody finds a way to work around this drawback, that contribution would be very welcome, as it'd add a lot of flexibility and delete a bunch of code.
 
-## Dependencies, Licenses
 
-Fasterflect is used to achieve faster .Invoke calls than UntiyAction:
+## Open source projects used:
+This project is mostly built from other projects
+
+## Fasterflect
+Used to achieve faster .Invoke calls than UntiyAction:
 - Licence: Apache 2.0
 - Available at: https://fasterflect.codeplex.com/
 
-FullSerializer is used to serialize some types of arguments:
+## FullSerializer 
+Used to serialize some types of arguments:
 - License: MIT
 - Available at: https://github.com/jacobdufault/fullserializer
 
-In addition, the type serialization is based on code by Bryan Keiren:
+## SpacePuppy
+A small chunk for extracting details has been extracted from the SpacePuppy framework by Dylan Engelman
+- Available at: https://github.com/lordofduct/spacepuppy-unity-framework
+- License: https://github.com/lordofduct/spacepuppy-unity-framework#license
+
+
+Finally, the type serialization is based on code by Bryan Keiren:
 - Code used: http://bryankeiren.com/files_public/UnityScripts/SerializableSystemType.cs
 - Bryan Keiren: http://www.bryankeiren.com/
