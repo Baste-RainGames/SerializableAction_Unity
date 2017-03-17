@@ -6,7 +6,7 @@ using Object = UnityEngine.Object;
 namespace SerializableActions.Internal
 {
     [CustomPropertyDrawer(typeof(SerializableArgument))]
-    public class SerializableParameterDrawer : PropertyDrawer
+    public class SerializableArgumentDrawer : PropertyDrawer
     {
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
@@ -18,10 +18,10 @@ namespace SerializableActions.Internal
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            var parameter = (SerializableArgument) SerializedPropertyHelper.GetTargetObjectOfProperty(property);
-            var type = parameter.ParameterType.SystemType;
-            var obj = parameter.UnpackParameter();
-            label = new GUIContent(parameter.Name);
+            var argument = (SerializableArgument) SerializedPropertyHelper.GetTargetObjectOfProperty(property);
+            var type = argument.ParameterType.SystemType;
+            var obj = argument.UnpackParameter();
+            label = new GUIContent(argument.ParameterType.Name + " " + argument.Name);
             EditorGUI.BeginChangeCheck();
 
             //Ideally, this if/else chain should be solved with a PropertyField, but it's not possible to generate a
@@ -55,7 +55,7 @@ namespace SerializableActions.Internal
 
             if (EditorGUI.EndChangeCheck())
             {
-                parameter.SetArgumentValue(obj);
+                argument.SetArgumentValue(obj);
                 property.SetDirty();
             }
         }

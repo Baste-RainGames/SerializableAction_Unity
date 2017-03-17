@@ -45,19 +45,18 @@ namespace SerializableActions.Internal
             if (parameterCount == 0)
                 return propHeightWithMethod;
 
-            //add 1 for the "Parameters:" header
-            var finalPropHeight = propHeightWithMethod + defaultHeight;
+            var finalPropHeight = propHeightWithMethod;
             for (var i = 0; i < action.TargetMethod.ParameterTypes.Length; i++)
             {
                 var parameterType = action.TargetMethod.ParameterTypes[i];
-                finalPropHeight += SerializableParameterDrawer.GetHeightForType(parameterType.SystemType, defaultHeight);
+                finalPropHeight += SerializableArgumentDrawer.GetHeightForType(parameterType.SystemType, defaultHeight);
             }
 
             return finalPropHeight;
         }
 
         /*
-         * This OnGUI uses the raw object instead of fiddling with the SerializedProperty.
+         * This OnGUI mostly uses the raw object instead of fiddling with the SerializedProperty.
          * This is because we need to handle things like raw System.Objects and arrays,
          * both of which SerializedProperties can't handle properly.
          *
@@ -99,8 +98,18 @@ namespace SerializableActions.Internal
             var objectSelectRect = position;
             objectSelectRect.xMin = callStateRect.xMax + 5f;
 
-            objectIdx = EditorGUI.Popup(objectSelectRect, objectIdx, objectNames);
-            action.TargetObject = objectsOnContainer[objectIdx];
+            var objectSelectRect_label = objectSelectRect;
+            var objectSelectRect_popup = objectSelectRect;
+            objectSelectRect_label.width = 90f;
+            objectSelectRect_popup.xMin = objectSelectRect_label.xMax + 5f;
+
+            EditorGUI.LabelField(objectSelectRect_label, "Target Script:");
+            var newIdx = EditorGUI.Popup(objectSelectRect_popup, objectIdx, objectNames);
+            if (newIdx != objectIdx)
+            {
+                objectIdx = newIdx;
+                action.TargetObject = objectsOnContainer[objectIdx];
+            }
 
             var type = action.TargetObject.GetType();
             EnsureMethodsCached(type);
@@ -118,7 +127,13 @@ namespace SerializableActions.Internal
                 methodNames[0] = "None selected";
 
             var methodSelectRect = NextPosition(objectSelectRect, EditorGUIUtility.singleLineHeight);
-            var newNameIdx = EditorGUI.Popup(methodSelectRect, nameIdx, methodNames);
+            var methodSelectRect_label = methodSelectRect;
+            var methodSelectRect_popup = methodSelectRect;
+            methodSelectRect_label.width = 90f;
+            methodSelectRect_popup.xMin = methodSelectRect_label.xMax + 5f;
+
+            EditorGUI.LabelField(methodSelectRect_label, "Target Method:");
+            var newNameIdx = EditorGUI.Popup(methodSelectRect_popup, nameIdx, methodNames);
 
             if (newNameIdx != nameIdx)
             {
@@ -168,54 +183,22 @@ namespace SerializableActions.Internal
             if (action.Arguments.Length == 0)
                 return;
 
-            //Need to go down twice.
             position = NextPosition(position, EditorGUIUtility.singleLineHeight);
-            position = NextPosition(position, EditorGUIUtility.singleLineHeight);
-            EditorGUI.indentLevel++;
-            EditorGUI.LabelField(position, "Parameters:");
-            EditorGUI.indentLevel++;
+            EditorGUI.indentLevel += 2;
 
             //Updating the serializedObject here syncs it with the changes from above
             property.serializedObject.Update();
             var parameters = property.FindPropertyRelative("arguments");
             for (int i = 0; i < parameters.arraySize; i++)
             {
-                var positionHeight = SerializableParameterDrawer.GetHeightForType(action.Arguments[i].ParameterType.SystemType,
+                var positionHeight = SerializableArgumentDrawer.GetHeightForType(action.Arguments[i].ParameterType.SystemType,
                                                                                   EditorGUIUtility.singleLineHeight);
                 position = NextPosition(position, positionHeight);
                 EditorGUI.PropertyField(position, parameters.GetArrayElementAtIndex(i), true);
             }
             property.serializedObject.ApplyModifiedProperties();
 
-            EditorGUI.indentLevel--;
-            EditorGUI.indentLevel--;
-        }
-
-        private static void ReadyObjectSelectDropdown(Object containingObject, Object targetObject,
-                                                      out Object[] objectsOnContainer, out string[] objectNames, out int currentSelectedIdx)
-        {
-            //Has dragged-and-dropped something else.
-            if (!(containingObject is GameObject))
-            {
-                objectsOnContainer = new[] {containingObject};
-                objectNames = new[] {containingObject.GetType().Name};
-                currentSelectedIdx = 0;
-                return;
-            }
-
-            var go = (GameObject) containingObject;
-            var components = go.GetComponents<Component>();
-            objectsOnContainer = new Object[components.Length + 1];
-            objectNames = new string[components.Length + 1];
-            objectsOnContainer[0] = containingObject;
-            objectNames[0] = containingObject.GetType().Name;
-            for (int i = 0; i < components.Length; i++)
-            {
-                objectsOnContainer[i + 1] = components[i];
-                objectNames[i + 1] = components[i].GetType().Name;
-            }
-
-            currentSelectedIdx = Array.IndexOf(objectsOnContainer, targetObject);
+            EditorGUI.indentLevel -= 2;
         }
 
         private static Rect NextPosition(Rect currentPosition, float nextPositionHeight)
@@ -241,5 +224,34 @@ namespace SerializableActions.Internal
                 typeToMethodNames[type] = methodNames;
             }
         }
+
+        private static void ReadyObjectSelectDropdown(Object containingObject, Object targetObject,
+                                                      out Object[] objectsOnContainer, out string[] objectNames, out int currentSelectedIdx)
+        {
+            //Has dragged-and-dropped something else.
+            if (!(containingObject is GameObject))
+            {
+                objectsOnContainer = new[] {containingObject};
+                objectNames = new[] {containingObject.GetType().Name};
+                currentSelectedIdx = 0;
+                return;
+            }
+
+            var go = (GameObject) containingObject;
+            var components = go.GetComponents<Component>();
+            //This pukes garbage in the editor, but caching breaks if new components are added to the container
+            objectsOnContainer = new Object[components.Length + 1];
+            objectNames = new string[components.Length + 1];
+            objectsOnContainer[0] = containingObject;
+            objectNames[0] = containingObject.GetType().Name;
+            for (int i = 0; i < components.Length; i++)
+            {
+                objectsOnContainer[i + 1] = components[i];
+                objectNames[i + 1] = components[i].GetType().Name;
+            }
+
+            currentSelectedIdx = Array.IndexOf(objectsOnContainer, targetObject);
+        }
+
     }
 }
