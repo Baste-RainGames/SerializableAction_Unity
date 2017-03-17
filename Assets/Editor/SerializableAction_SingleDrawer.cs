@@ -109,6 +109,8 @@ namespace SerializableActions.Internal
             {
                 objectIdx = newIdx;
                 action.TargetObject = objectsOnContainer[objectIdx];
+                action.TargetMethod = null;
+                action.Arguments = null;
             }
 
             var type = action.TargetObject.GetType();
@@ -187,7 +189,7 @@ namespace SerializableActions.Internal
             EditorGUI.indentLevel += 2;
 
             //Updating the serializedObject here syncs it with the changes from above
-            property.serializedObject.Update();
+//            property.serializedObject.Update();
             var parameters = property.FindPropertyRelative("arguments");
             for (int i = 0; i < parameters.arraySize; i++)
             {
