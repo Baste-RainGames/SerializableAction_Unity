@@ -18,7 +18,7 @@ namespace SerializableActions.Internal
 
         public override string ToString()
         {
-            return Name;
+            return NiceName;
         }
     }
 }

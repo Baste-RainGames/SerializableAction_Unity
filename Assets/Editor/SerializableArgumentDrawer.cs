@@ -21,7 +21,7 @@ namespace SerializableActions.Internal
             var argument = (SerializableArgument) SerializedPropertyHelper.GetTargetObjectOfProperty(property);
             var type = argument.ParameterType.SystemType;
             var obj = argument.UnpackParameter();
-            label = new GUIContent(argument.ParameterType.Name + " " + argument.Name);
+            label = new GUIContent(argument.ParameterType.NiceName + " " + argument.Name);
             EditorGUI.BeginChangeCheck();
 
             //Ideally, this if/else chain should be solved with a PropertyField, but it's not possible to generate a

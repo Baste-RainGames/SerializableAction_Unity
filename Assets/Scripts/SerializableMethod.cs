@@ -23,7 +23,7 @@ namespace SerializableActions.Internal
         [SerializeField]
         private SerializeableParameterType[] parameterTypes;
         [SerializeField]
-        private string[] paramterNames;
+        private string[] parameterNames;
 
         /// <summary>
         /// Name of the method
@@ -40,7 +40,7 @@ namespace SerializableActions.Internal
         /// The parameter names of the method.
         /// If the wrapped method is Foo(int i, string s), this array is [i, s]
         /// </summary>
-        public string[] ParameterNames { get { return paramterNames; } }
+        public string[] ParameterNames { get { return parameterNames; } }
 
         public SerializableMethod(MethodInfo method)
         {
@@ -50,7 +50,7 @@ namespace SerializableActions.Internal
             containingType = method.DeclaringType;
             isGeneric = method.IsGenericMethod;
 
-            ExtractParameters(method, isGeneric, out parameterTypes, out paramterNames);
+            ExtractParameters(method, isGeneric, out parameterTypes, out parameterNames);
 
             bindingFlags =
                 (method.IsPublic ? BindingFlags.Public : BindingFlags.NonPublic) |
@@ -150,6 +150,10 @@ namespace SerializableActions.Internal
             {
                 return "Null method";
             }
+            if (MethodLister.IsSetter(MethodInfo))
+            {
+                return string.Format("{0} ({1})", methodInfo.Name.Replace("_", " "), parameterTypes[0]);
+            }
 
             string printData = MethodInfo.Name;
 
@@ -158,11 +162,7 @@ namespace SerializableActions.Internal
                 printData += "(";
                 for (var i = 0; i < parameterTypes.Length; i++)
                 {
-                    var paramName = parameterTypes[i].Name;
-                    if (paramName == "Single")
-                        paramName = "Float"; //why, C#?
-
-                    printData += string.Format("{0} {1}", paramName, paramterNames[i]);
+                    printData += string.Format("{0} {1}", parameterTypes[i], parameterNames[i]);
                     if (i != parameterTypes.Length - 1)
                         printData += ", ";
                 }

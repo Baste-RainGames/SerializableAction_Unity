@@ -2,7 +2,7 @@
 // Use it however you like, but crediting or even just contacting the author would be appreciated (Always
 // nice to see people using your stuff!)
 //
-// Written by Bryan Keiren (http://www.bryankeiren.com)
+// Originally written by Bryan Keiren (http://www.bryankeiren.com)
 
 namespace SerializableActions.Internal
 {
@@ -17,6 +17,18 @@ namespace SerializableActions.Internal
         private string m_Name;
 
         public string Name { get { return m_Name; } }
+        public string NiceName
+        {
+            get
+            {
+                if (Name== "Single")
+                    return "Float";
+                if (Name == "Int32")
+                    return "Int";
+
+                return Name;
+            }
+        }
 
         [SerializeField]
         private string m_AssemblyQualifiedName;
