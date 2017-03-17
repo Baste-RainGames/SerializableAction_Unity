@@ -2,6 +2,7 @@
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace SerializableActions.Internal
 {
@@ -65,6 +66,18 @@ namespace SerializableActions.Internal
                 rect.height = rectHeight;
 
                 defaults.DrawElementBackground(rect, index, active, focused, true);
+            };
+
+            reorderable.onAddCallback = list =>
+            {
+                defaults.DoAddButton(list);
+                //If this is the first element, set the call state to the correct default. Otherwise do what the reorderable always does, which is
+                //copy from the element above
+                if (list.index == 0)
+                {
+                    var addedObj = actionsProp.GetArrayElementAtIndex(list.index);
+                    addedObj.FindPropertyRelative("callState").enumValueIndex = (int) UnityEventCallState.RuntimeOnly;
+                }
             };
         }
     }

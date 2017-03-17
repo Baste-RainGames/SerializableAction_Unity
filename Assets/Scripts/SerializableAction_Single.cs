@@ -21,7 +21,7 @@ namespace SerializableActions.Internal
         private Object targetObject;
         [SerializeField]
         private SerializableMethod targetMethod;
-        public UnityEventCallState callState = UnityEventCallState.RuntimeOnly;
+        public UnityEventCallState callState;
 
         /// <summary>
         /// Object the serialized action will be called on.
