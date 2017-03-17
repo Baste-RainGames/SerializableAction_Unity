@@ -50,7 +50,7 @@ Ideally, Unity's PropertyField could be used to draw arbitrary serialized data. 
 
 
 ## Open source projects used:
-This project is mostly built from other projects
+There's quite a few open source projects that made creating this a lot easier. The ones currently used are:
 
 ## Fasterflect
 Used to achieve faster .Invoke calls than UntiyAction:
@@ -64,10 +64,10 @@ Used to serialize some types of arguments:
 
 ## SpacePuppy
 A small chunk for extracting details has been extracted from the SpacePuppy framework by Dylan Engelman
-- Available at: https://github.com/lordofduct/spacepuppy-unity-framework
 - License: https://github.com/lordofduct/spacepuppy-unity-framework#license
+- Available at: https://github.com/lordofduct/spacepuppy-unity-framework
 
-
-Finally, the type serialization is based on code by Bryan Keiren:
+## SerializableSystemType
+The type serialization is based on code by Bryan Keiren:
 - Code used: http://bryankeiren.com/files_public/UnityScripts/SerializableSystemType.cs
 - Bryan Keiren: http://www.bryankeiren.com/
