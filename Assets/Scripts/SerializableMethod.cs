@@ -3,12 +3,14 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
-namespace SerializableActions.Internal {
+namespace SerializableActions.Internal
+{
     /// <summary>
     /// Serializable wrapper for a MethodInfo.
     /// </summary>
     [Serializable]
-    public class SerializableMethod {
+    public class SerializableMethod
+    {
         [SerializeField]
         private string methodName;
 
@@ -40,7 +42,8 @@ namespace SerializableActions.Internal {
         /// </summary>
         public string[] ParameterNames { get { return paramterNames; } }
 
-        public SerializableMethod(MethodInfo method) {
+        public SerializableMethod(MethodInfo method)
+        {
             methodInfo = method;
 
             methodName = method.Name;
@@ -55,48 +58,60 @@ namespace SerializableActions.Internal {
 
         }
 
-        private void ExtractParameters(MethodInfo method, bool isGeneric, out SerializeableParameterType[] paramTypes, out string[] paramNames) {
+        private void ExtractParameters(MethodInfo method, bool isGeneric, out SerializeableParameterType[] paramTypes, out string[] paramNames)
+        {
             var rawParameters = method.GetParameters();
             paramTypes = new SerializeableParameterType[rawParameters.Length];
             paramNames = new string[rawParameters.Length];
 
-            for (int i = 0; i < rawParameters.Length; i++) {
+            for (int i = 0; i < rawParameters.Length; i++)
+            {
                 paramTypes[i] = new SerializeableParameterType(rawParameters[i].ParameterType);
                 paramNames[i] = rawParameters[i].Name;
             }
 
-            if (isGeneric) {
+            if (isGeneric)
+            {
                 var genericVersion = method.GetGenericMethodDefinition();
                 var genericParams = genericVersion.GetParameters();
-                for (int i = 0; i < genericParams.Length; i++) {
+                for (int i = 0; i < genericParams.Length; i++)
+                {
                     paramTypes[i].IsGeneric = genericParams[i].ParameterType.IsGenericParameter;
                 }
             }
         }
 
         private MethodInfo methodInfo;
-        public MethodInfo MethodInfo {
-            get {
-                if (methodInfo == null && !string.IsNullOrEmpty(methodName)) {
+        public MethodInfo MethodInfo
+        {
+            get
+            {
+                if (methodInfo == null && !string.IsNullOrEmpty(methodName))
+                {
                     Type[] types = new Type[parameterTypes.Length];
-                    for (int i = 0; i < types.Length; i++) {
+                    for (int i = 0; i < types.Length; i++)
+                    {
                         types[i] = parameterTypes[i].SystemType;
                     }
 
                     var allMethods = containingType.SystemType.GetMethods(bindingFlags).Where(method => method.Name == methodName);
-                    foreach (var method in allMethods) {
-                        if (ParametersMatch(method.GetParameters(), parameterTypes)) {
+                    foreach (var method in allMethods)
+                    {
+                        if (ParametersMatch(method.GetParameters(), parameterTypes))
+                        {
                             methodInfo = method;
                             break;
                         }
                     }
 
-                    if (methodInfo != null && isGeneric) {
+                    if (methodInfo != null && isGeneric)
+                    {
                         Type[] generics = (from param in parameterTypes where param.IsGeneric select param.SystemType).ToArray();
                         methodInfo = methodInfo.MakeGenericMethod(generics);
                     }
 
-                    if (methodInfo == null) {
+                    if (methodInfo == null)
+                    {
                         return null;
                     }
                 }
@@ -104,18 +119,23 @@ namespace SerializableActions.Internal {
             }
         }
 
-        private bool ParametersMatch(ParameterInfo[] parameters, SerializeableParameterType[] serializedParameters) {
+        private bool ParametersMatch(ParameterInfo[] parameters, SerializeableParameterType[] serializedParameters)
+        {
             if (parameters.Length != serializedParameters.Length)
                 return false;
 
-            for (int i = 0; i < parameters.Length; i++) {
+            for (int i = 0; i < parameters.Length; i++)
+            {
                 //Special-case for generics, just check that both are marked as generic
-                if (parameters[i].ParameterType.IsGenericParameter) {
-                    if (!serializedParameters[i].IsGeneric) {
+                if (parameters[i].ParameterType.IsGenericParameter)
+                {
+                    if (!serializedParameters[i].IsGeneric)
+                    {
                         return false;
                     }
                 }
-                else {
+                else
+                {
                     if (parameters[i].ParameterType != serializedParameters[i].SystemType)
                         return false;
                 }
@@ -124,16 +144,20 @@ namespace SerializableActions.Internal {
             return true;
         }
 
-        public override string ToString() {
-            if (MethodInfo == null) {
+        public override string ToString()
+        {
+            if (MethodInfo == null)
+            {
                 return "Null method";
             }
 
             string printData = MethodInfo.Name;
 
-            if (parameterTypes.Length > 0) {
+            if (parameterTypes.Length > 0)
+            {
                 printData += "(";
-                for (var i = 0; i < parameterTypes.Length; i++) {
+                for (var i = 0; i < parameterTypes.Length; i++)
+                {
                     var paramName = parameterTypes[i].Name;
                     if (paramName == "Single")
                         paramName = "Float"; //why, C#?
@@ -144,13 +168,15 @@ namespace SerializableActions.Internal {
                 }
                 printData += ")";
             }
-            if (MethodInfo.ReturnType != typeof(void)) {
+            if (MethodInfo.ReturnType != typeof(void))
+            {
                 printData += " => " + MethodInfo.ReturnType.Name;
             }
             return printData;
         }
 
-        protected bool Equals(SerializableMethod other) {
+        protected bool Equals(SerializableMethod other)
+        {
             return string.Equals(methodName, other.methodName) &&
                    Equals(containingType, other.containingType) &&
                    bindingFlags == other.bindingFlags &&
@@ -158,7 +184,8 @@ namespace SerializableActions.Internal {
                    Util.ArraysEqual(parameterTypes, other.parameterTypes);
         }
 
-        public override bool Equals(object obj) {
+        public override bool Equals(object obj)
+        {
             if (ReferenceEquals(null, obj))
                 return false;
             if (ReferenceEquals(this, obj))
@@ -168,8 +195,10 @@ namespace SerializableActions.Internal {
             return Equals((SerializableMethod) obj);
         }
 
-        public override int GetHashCode() {
-            unchecked {
+        public override int GetHashCode()
+        {
+            unchecked
+            {
                 var hashCode = (methodName != null ? methodName.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ (containingType != null ? containingType.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ (int) bindingFlags;

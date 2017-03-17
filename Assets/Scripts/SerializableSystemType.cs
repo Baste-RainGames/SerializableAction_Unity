@@ -3,13 +3,16 @@
 // nice to see people using your stuff!)
 //
 // Written by Bryan Keiren (http://www.bryankeiren.com)
-namespace SerializableActions.Internal {
+
+namespace SerializableActions.Internal
+{
     using System;
     using UnityEngine;
     using Object = System.Object;
 
     [Serializable]
-    public class SerializableSystemType {
+    public class SerializableSystemType
+    {
         [SerializeField]
         private string m_Name;
 
@@ -26,65 +29,80 @@ namespace SerializableActions.Internal {
         public string AssemblyName { get { return m_AssemblyName; } }
 
         private Type m_SystemType;
-        public Type SystemType {
-            get {
-                if (m_SystemType == null) {
+        public Type SystemType
+        {
+            get
+            {
+                if (m_SystemType == null)
+                {
                     GetSystemType();
                 }
                 return m_SystemType;
             }
         }
 
-        private void GetSystemType() {
+        private void GetSystemType()
+        {
             m_SystemType = Type.GetType(m_AssemblyQualifiedName);
         }
 
-        public SerializableSystemType(Type _SystemType) {
+        public SerializableSystemType(Type _SystemType)
+        {
             m_SystemType = _SystemType;
             m_Name = _SystemType.Name;
             m_AssemblyQualifiedName = _SystemType.AssemblyQualifiedName;
             m_AssemblyName = _SystemType.Assembly.FullName;
         }
 
-        public override bool Equals(Object obj) {
+        public override bool Equals(Object obj)
+        {
             SerializableSystemType temp = obj as SerializableSystemType;
-            if ((object) temp == null) {
+            if ((object) temp == null)
+            {
                 return false;
             }
             return Equals(temp);
         }
 
-        public bool Equals(SerializableSystemType _Object) {
+        public bool Equals(SerializableSystemType _Object)
+        {
             return SystemType.Equals(_Object.SystemType);
         }
 
-        public static bool operator ==(SerializableSystemType a, SerializableSystemType b) {
+        public static bool operator ==(SerializableSystemType a, SerializableSystemType b)
+        {
             // If both are null, or both are same instance, return true.
-            if (ReferenceEquals(a, b)) {
+            if (ReferenceEquals(a, b))
+            {
                 return true;
             }
 
             // If one is null, but not both, return false.
-            if (((object) a == null) || ((object) b == null)) {
+            if (((object) a == null) || ((object) b == null))
+            {
                 return false;
             }
 
             return a.Equals(b);
         }
 
-        public static bool operator !=(SerializableSystemType a, SerializableSystemType b) {
+        public static bool operator !=(SerializableSystemType a, SerializableSystemType b)
+        {
             return !(a == b);
         }
 
-        public override int GetHashCode() {
+        public override int GetHashCode()
+        {
             return SystemType.GetHashCode();
         }
 
-        public static implicit operator SerializableSystemType(Type type) {
+        public static implicit operator SerializableSystemType(Type type)
+        {
             return new SerializableSystemType(type);
         }
 
-        public static implicit operator Type(SerializableSystemType type) {
+        public static implicit operator Type(SerializableSystemType type)
+        {
             return type.SystemType;
         }
     }

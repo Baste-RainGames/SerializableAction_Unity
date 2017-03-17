@@ -8,17 +8,18 @@ using UnityEditor;
 
 public class Test : MonoBehaviour
 {
-    public UnityEvent unityAction;
     public SerializableAction serializableAction;
-    public int sum;
+
+    public UnityEvent @event;
 
     public void Foo(Person p)
     {
-        sum += p.Age + p.Name.Length;
     }
 
     public void Bar(int i)
-    { }
+    {
+
+    }
 
     public void Bar(Rect r)
     { }

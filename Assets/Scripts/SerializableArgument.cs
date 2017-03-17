@@ -3,13 +3,15 @@ using FullSerializer;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace SerializableActions.Internal {
+namespace SerializableActions.Internal
+{
     /// <summary>
     /// This is a serializable wrapper for an argument. It contains both the value of the argument,
     /// and information about the parameter the argument is for.
     /// </summary>
     [Serializable]
-    public class SerializableArgument {
+    public class SerializableArgument
+    {
         private static readonly fsSerializer _serializer = new fsSerializer();
 
         [SerializeField]
@@ -59,7 +61,8 @@ namespace SerializableActions.Internal {
         /// </summary>
         private object argumentValue;
 
-        public SerializableArgument(object argument, Type parameterType, string parameterName) {
+        public SerializableArgument(object argument, Type parameterType, string parameterName)
+        {
             this.parameterType = parameterType;
             this.parameterName = parameterName;
 
@@ -68,12 +71,16 @@ namespace SerializableActions.Internal {
         }
 
         /// <returns>The runtime value of the argument</returns>
-        public object UnpackParameter() {
-            if (argumentValue == null) {
-                if (isUnityObject) {
+        public object UnpackParameter()
+        {
+            if (argumentValue == null)
+            {
+                if (isUnityObject)
+                {
                     argumentValue = objectWrapper.objectReference;
                 }
-                else {
+                else
+                {
                     var parsed = fsJsonParser.Parse(paramAsJson);
                     _serializer.TryDeserialize(parsed, argumentType.SystemType, ref argumentValue).AssertSuccess();
                 }
@@ -87,8 +94,10 @@ namespace SerializableActions.Internal {
         /// </summary>
         /// <param name="argument">Argument to set</param>
         /// <exception cref="ArgumentException">If the argument is not assignable to the parameter type</exception>
-        public void SetArgumentValue(object argument) {
-            if (parameterType.SystemType.IsValueType) {
+        public void SetArgumentValue(object argument)
+        {
+            if (parameterType.SystemType.IsValueType)
+            {
                 if (argument == null)
                     throw new ArgumentException("Trying to set null as parameter value for a SerializeableParameter, but the parameter's type is the " +
                                                 "value type " + parameterType.Name + "!");
@@ -98,7 +107,8 @@ namespace SerializableActions.Internal {
                                                 " to a SerializeableParameter that expects a value" +
                                                 "of value type " + parameterType.Name);
             }
-            else {
+            else
+            {
                 if (argument != null && !parameterType.SystemType.IsInstanceOfType(argument))
                     throw new ArgumentException("Trying to assign " + argument + " of type " + argument.GetType() +
                                                 " to SerializeableParameter expecting type " +
@@ -112,13 +122,16 @@ namespace SerializableActions.Internal {
 
             argumentValue = argument;
             isUnityObject = argument is Object;
-            if (isUnityObject) {
+            if (isUnityObject)
+            {
                 paramAsJson = "";
                 objectWrapper = ScriptableObject.CreateInstance<UnityEngineObjectWrapper>();
                 objectWrapper.objectReference = argument as UnityEngine.Object;
             }
-            else {
-                if (objectWrapper != null) {
+            else
+            {
+                if (objectWrapper != null)
+                {
                     if (Application.isPlaying)
                         Object.Destroy(objectWrapper);
                     else

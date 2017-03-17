@@ -2,20 +2,24 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Events;
 using Object = UnityEngine.Object;
 
-namespace SerializableActions.Internal {
+namespace SerializableActions.Internal
+{
     [CustomPropertyDrawer(typeof(SerializableAction_Single))]
-    public class SerializableAction_SingleDrawer : PropertyDrawer {
-
+    public class SerializableAction_SingleDrawer : PropertyDrawer
+    {
         private static Dictionary<Type, List<SerializableMethod>> typeToMethod = new Dictionary<Type, List<SerializableMethod>>();
         private static Dictionary<Type, string[]> typeToMethodNames = new Dictionary<Type, string[]>();
 
-        public override float GetPropertyHeight(SerializedProperty property, GUIContent label) {
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
             return FindSerializableActionHeight(property, label);
         }
 
-        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label) {
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
             position.height = EditorGUIUtility.singleLineHeight;
             EditorGUI.LabelField(position, label);
             EditorGUI.indentLevel++;
@@ -24,7 +28,8 @@ namespace SerializableActions.Internal {
             EditorGUI.indentLevel--;
         }
 
-        public static float FindSerializableActionHeight(SerializedProperty property, GUIContent label) {
+        public static float FindSerializableActionHeight(SerializedProperty property, GUIContent label)
+        {
             float defaultHeight = EditorGUIUtility.singleLineHeight + 1;
             var action = (SerializableAction_Single) SerializedPropertyHelper.GetTargetObjectOfProperty(property);
 
@@ -42,7 +47,8 @@ namespace SerializableActions.Internal {
 
             //add 1 for the "Parameters:" header
             var finalPropHeight = propHeightWithMethod + defaultHeight;
-            for (var i = 0; i < action.TargetMethod.ParameterTypes.Length; i++) {
+            for (var i = 0; i < action.TargetMethod.ParameterTypes.Length; i++)
+            {
                 var parameterType = action.TargetMethod.ParameterTypes[i];
                 finalPropHeight += SerializableParameterDrawer.GetHeightForType(parameterType.SystemType, defaultHeight);
             }
@@ -57,18 +63,44 @@ namespace SerializableActions.Internal {
          *
          * static so the list drawer can use it
          */
-        public static void DrawSerializableAction(Rect position, SerializedProperty property) {
+        public static void DrawSerializableAction(Rect position, SerializedProperty property)
+        {
             EditorGUI.BeginChangeCheck();
             position.height = EditorGUIUtility.singleLineHeight;
             var action = (SerializableAction_Single) SerializedPropertyHelper.GetTargetObjectOfProperty(property);
 
-            action.TargetObject = EditorGUI.ObjectField(position, "Target Object", action.TargetObject, typeof(Object), true);
+            Object containingObject = action.TargetObject;
+            if (action.TargetObject != null && action.TargetObject is Component)
+                containingObject = (action.TargetObject as Component).gameObject;
 
-            if (action.TargetObject == null) {
+            var callStateRect = position;
+            callStateRect.width *= .3f;
+            action.callState = (UnityEventCallState) EditorGUI.EnumPopup(callStateRect, action.callState);
+
+            var objectRect = NextPosition(callStateRect, EditorGUIUtility.singleLineHeight);
+            var newContainingObject = EditorGUI.ObjectField(objectRect, containingObject, typeof(Object), true);
+
+            if (newContainingObject != containingObject)
+                action.TargetObject = newContainingObject;
+            containingObject = newContainingObject;
+
+            if (action.TargetObject == null)
+            {
                 if (EditorGUI.EndChangeCheck())
                     property.SetDirty();
                 return;
             }
+
+            int objectIdx;
+            Object[] objectsOnContainer;
+            string[] objectNames;
+            ReadyObjectSelectDropdown(containingObject, action.TargetObject, out objectsOnContainer, out objectNames, out objectIdx);
+
+            var objectSelectRect = position;
+            objectSelectRect.xMin = callStateRect.xMax + 5f;
+
+            objectIdx = EditorGUI.Popup(objectSelectRect, objectIdx, objectNames);
+            action.TargetObject = objectsOnContainer[objectIdx];
 
             var type = action.TargetObject.GetType();
             EnsureMethodsCached(type);
@@ -77,7 +109,6 @@ namespace SerializableActions.Internal {
             var currentIdx = methods.IndexOf(action.TargetMethod);
             var nameIdx = currentIdx + 1;
 
-            position = NextPosition(position, EditorGUIUtility.singleLineHeight);
             var methodNames = typeToMethodNames[type];
 
             //Detect deleted method
@@ -86,27 +117,34 @@ namespace SerializableActions.Internal {
             else
                 methodNames[0] = "None selected";
 
-            var newNameIdx = EditorGUI.Popup(position, "Target Method", nameIdx, methodNames);
+            var methodSelectRect = NextPosition(objectSelectRect, EditorGUIUtility.singleLineHeight);
+            var newNameIdx = EditorGUI.Popup(methodSelectRect, nameIdx, methodNames);
 
-            if (newNameIdx != nameIdx) {
-                if (newNameIdx == 0) {
+            if (newNameIdx != nameIdx)
+            {
+                if (newNameIdx == 0)
+                {
                     action.TargetMethod = null;
                     action.Arguments = new SerializableArgument[0];
                 }
-                else {
+                else
+                {
                     var oldMethod = action.TargetMethod;
                     var targetMethod = methods[newNameIdx - 1];
                     action.TargetMethod = targetMethod;
 
                     var oldParameters = action.Arguments;
                     action.Arguments = new SerializableArgument[action.TargetMethod.ParameterTypes.Length];
-                    for (int i = 0; i < action.Arguments.Length; i++) {
+                    for (int i = 0; i < action.Arguments.Length; i++)
+                    {
                         object value;
                         if (oldMethod != null && oldParameters != null && i < oldParameters.Length &&
-                            oldMethod.ParameterTypes[i].Equals(targetMethod.ParameterTypes[i])) {
+                            oldMethod.ParameterTypes[i].Equals(targetMethod.ParameterTypes[i]))
+                        {
                             value = oldParameters[i].UnpackParameter();
                         }
-                        else {
+                        else
+                        {
                             value = DefaultValueFinder.CreateDefaultFor(targetMethod.ParameterTypes[i].SystemType);
                         }
 
@@ -117,7 +155,8 @@ namespace SerializableActions.Internal {
                 }
             }
 
-            if (newNameIdx == 0) {
+            if (newNameIdx == 0)
+            {
                 if (EditorGUI.EndChangeCheck())
                     property.SetDirty();
                 return;
@@ -129,6 +168,8 @@ namespace SerializableActions.Internal {
             if (action.Arguments.Length == 0)
                 return;
 
+            //Need to go down twice.
+            position = NextPosition(position, EditorGUIUtility.singleLineHeight);
             position = NextPosition(position, EditorGUIUtility.singleLineHeight);
             EditorGUI.indentLevel++;
             EditorGUI.LabelField(position, "Parameters:");
@@ -137,7 +178,8 @@ namespace SerializableActions.Internal {
             //Updating the serializedObject here syncs it with the changes from above
             property.serializedObject.Update();
             var parameters = property.FindPropertyRelative("arguments");
-            for (int i = 0; i < parameters.arraySize; i++) {
+            for (int i = 0; i < parameters.arraySize; i++)
+            {
                 var positionHeight = SerializableParameterDrawer.GetHeightForType(action.Arguments[i].ParameterType.SystemType,
                                                                                   EditorGUIUtility.singleLineHeight);
                 position = NextPosition(position, positionHeight);
@@ -149,18 +191,49 @@ namespace SerializableActions.Internal {
             EditorGUI.indentLevel--;
         }
 
-        private static Rect NextPosition(Rect currentPosition, float nextPositionHeight) {
+        private static void ReadyObjectSelectDropdown(Object containingObject, Object targetObject,
+                                                      out Object[] objectsOnContainer, out string[] objectNames, out int currentSelectedIdx)
+        {
+            //Has dragged-and-dropped something else.
+            if (!(containingObject is GameObject))
+            {
+                objectsOnContainer = new[] {containingObject};
+                objectNames = new[] {containingObject.GetType().Name};
+                currentSelectedIdx = 0;
+                return;
+            }
+
+            var go = (GameObject) containingObject;
+            var components = go.GetComponents<Component>();
+            objectsOnContainer = new Object[components.Length + 1];
+            objectNames = new string[components.Length + 1];
+            objectsOnContainer[0] = containingObject;
+            objectNames[0] = containingObject.GetType().Name;
+            for (int i = 0; i < components.Length; i++)
+            {
+                objectsOnContainer[i + 1] = components[i];
+                objectNames[i + 1] = components[i].GetType().Name;
+            }
+
+            currentSelectedIdx = Array.IndexOf(objectsOnContainer, targetObject);
+        }
+
+        private static Rect NextPosition(Rect currentPosition, float nextPositionHeight)
+        {
             currentPosition.y += currentPosition.height + 1;
             currentPosition.height = nextPositionHeight;
             return currentPosition;
         }
 
-        private static void EnsureMethodsCached(Type type) {
-            if (!typeToMethod.ContainsKey(type)) {
+        private static void EnsureMethodsCached(Type type)
+        {
+            if (!typeToMethod.ContainsKey(type))
+            {
                 var methods = MethodLister.SerializeableMethodsOn(type);
                 var methodNames = new string[methods.Count + 1];
                 methodNames[0] = "None selected";
-                for (int i = 0; i < methods.Count; i++) {
+                for (int i = 0; i < methods.Count; i++)
+                {
                     methodNames[i + 1] = methods[i].ToString();
                 }
 

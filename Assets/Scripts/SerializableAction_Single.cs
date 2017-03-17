@@ -2,15 +2,18 @@
 using Fasterflect;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.Events;
 using Object = UnityEngine.Object;
 
-namespace SerializableActions.Internal {
+namespace SerializableActions.Internal
+{
     /// <summary>
     /// This is a serialized wrapper around a single action that can be drawn in the inspector.
     /// It's recommended to use the SerializableAction instead, as it support an arbitrary number of arguments.
     /// </summary>
     [Serializable]
-    public class SerializableAction_Single : ISerializationCallbackReceiver {
+    public class SerializableAction_Single : ISerializationCallbackReceiver
+    {
 
         [SerializeField]
         private SerializableArgument[] arguments;
@@ -18,6 +21,7 @@ namespace SerializableActions.Internal {
         private Object targetObject;
         [SerializeField]
         private SerializableMethod targetMethod;
+        public UnityEventCallState callState = UnityEventCallState.RuntimeOnly;
 
         /// <summary>
         /// Object the serialized action will be called on.
@@ -38,39 +42,47 @@ namespace SerializableActions.Internal {
         private MethodInvoker invoker;
         private bool methodDeleted;
 
-        public SerializableAction_Single(Object targetObject, SerializableMethod targetMethod, params object[] parameters) {
+        public SerializableAction_Single(Object targetObject, SerializableMethod targetMethod, params object[] parameters)
+        {
             Assert.AreEqual(targetMethod.ParameterTypes.Length, parameters.Length);
 
             this.targetObject = targetObject;
             this.targetMethod = targetMethod;
             arguments = new SerializableArgument[parameters.Length];
-            for (int i = 0; i < arguments.Length; i++) {
+            for (int i = 0; i < arguments.Length; i++)
+            {
                 arguments[i] = new SerializableArgument(parameters[i], parameters[i].GetType(), targetMethod.ParameterNames[i]);
             }
         }
 
-        public void Invoke() {
+        public void Invoke()
+        {
             if (!methodDeleted)
                 invoker.Invoke(targetObject, argumentList);
             else
                 Debug.LogWarning("Trying to invoke SerializableAction, but the serialized method " + targetMethod.MethodName + " has been deleted!");
         }
 
-        public void OnBeforeSerialize() { }
+        public void OnBeforeSerialize()
+        { }
 
-        public void OnAfterDeserialize() {
+        public void OnAfterDeserialize()
+        {
             argumentList = new object[arguments.Length];
             var paramTypeList = new Type[arguments.Length];
-            for (int i = 0; i < argumentList.Length; i++) {
+            for (int i = 0; i < argumentList.Length; i++)
+            {
                 argumentList[i] = arguments[i].UnpackParameter();
                 paramTypeList[i] = arguments[i].ArgumentType;
             }
 
             methodDeleted = false;
-            try {
+            try
+            {
                 invoker = TargetObject.GetType().DelegateForInvoke(TargetMethod.MethodName, paramTypeList);
             }
-            catch (MissingMethodException) {
+            catch (MissingMethodException)
+            {
                 methodDeleted = true;
             }
 

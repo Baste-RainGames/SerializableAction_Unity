@@ -3,17 +3,21 @@ using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace SerializableActions.Internal {
+namespace SerializableActions.Internal
+{
     [CustomPropertyDrawer(typeof(SerializableArgument))]
-    public class SerializableParameterDrawer : PropertyDrawer {
+    public class SerializableParameterDrawer : PropertyDrawer
+    {
 
-        public override float GetPropertyHeight(SerializedProperty property, GUIContent label) {
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
             var parameter = (SerializableArgument) SerializedPropertyHelper.GetTargetObjectOfProperty(property);
             var type = parameter.ParameterType.SystemType;
             return GetHeightForType(type, base.GetPropertyHeight(property, label));
         }
 
-        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label) {
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
             var parameter = (SerializableArgument) SerializedPropertyHelper.GetTargetObjectOfProperty(property);
             var type = parameter.ParameterType.SystemType;
             var obj = parameter.UnpackParameter();
@@ -49,13 +53,15 @@ namespace SerializableActions.Internal {
             else
                 EditorGUI.LabelField(position, "Can't create drawer for type " + type.Name);
 
-            if (EditorGUI.EndChangeCheck()) {
+            if (EditorGUI.EndChangeCheck())
+            {
                 parameter.SetArgumentValue(obj);
                 property.SetDirty();
             }
         }
 
-        public static float GetHeightForType(Type type, float defaultHeight) {
+        public static float GetHeightForType(Type type, float defaultHeight)
+        {
             if (type == typeof(Bounds))
                 return defaultHeight * 3f;
             if (type == typeof(Rect))
