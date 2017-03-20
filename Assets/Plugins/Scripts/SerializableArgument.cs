@@ -54,7 +54,7 @@ namespace SerializableActions.Internal
         /// If the argument is something else, this is null
         /// </summary>
         [SerializeField]
-        private UnityEngineObjectWrapper objectWrapper;
+        private Object objectWrapper;
 
         /// <summary>
         /// The runtime value of the argument.
@@ -77,7 +77,7 @@ namespace SerializableActions.Internal
             {
                 if (isUnityObject)
                 {
-                    argumentValue = objectWrapper.objectReference;
+                    argumentValue = objectWrapper;
                 }
                 else
                 {
@@ -125,8 +125,7 @@ namespace SerializableActions.Internal
             if (isUnityObject)
             {
                 paramAsJson = "";
-                objectWrapper = ScriptableObject.CreateInstance<UnityEngineObjectWrapper>();
-                objectWrapper.objectReference = argument as UnityEngine.Object;
+                objectWrapper = argument as UnityEngine.Object;
             }
             else
             {

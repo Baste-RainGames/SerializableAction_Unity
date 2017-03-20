@@ -46,6 +46,15 @@ namespace SerializableActions.Internal
                 obj = EditorGUI.TextField(position, label, (string) obj);
             else if (type == typeof(bool))
                 obj = EditorGUI.Toggle(position, label, (bool) obj);
+            else if (type == typeof(Vector2))
+                obj = EditorGUI.Vector2Field(position, label, (Vector2) obj);
+            else if (type == typeof(Vector3))
+                obj = EditorGUI.Vector3Field(position, label, (Vector3) obj);
+            else if (type == typeof(Vector4))
+                obj = EditorGUI.Vector4Field(position, label, (Vector4) obj);
+            else if (type == typeof(Quaternion))
+                //Is there a better way to do this?
+                obj = Quaternion.Euler(EditorGUI.Vector3Field(position, label, ((Quaternion) obj).eulerAngles));
             else if (type == typeof(Rect))
                 obj = EditorGUI.RectField(position, label, (Rect) obj);
             else if (typeof(Object).IsAssignableFrom(type))
