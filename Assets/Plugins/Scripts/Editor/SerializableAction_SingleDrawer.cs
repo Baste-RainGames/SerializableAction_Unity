@@ -12,6 +12,7 @@ namespace SerializableActions.Internal
     {
         private static Dictionary<Type, List<SerializableMethod>> typeToMethod = new Dictionary<Type, List<SerializableMethod>>();
         private static Dictionary<Type, string[]> typeToMethodNames = new Dictionary<Type, string[]>();
+        private const string NoMethodSelected = "None";
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
@@ -126,7 +127,7 @@ namespace SerializableActions.Internal
             if (currentIdx == -1 && action.TargetMethod != null && !string.IsNullOrEmpty(action.TargetMethod.MethodName))
                 methodNames[0] = "Deleted method! Old name: " + action.TargetMethod.MethodName;
             else
-                methodNames[0] = "None selected";
+                methodNames[0] = NoMethodSelected;
 
             var methodSelectRect = NextPosition(objectSelectRect, EditorGUIUtility.singleLineHeight);
             var methodSelectRect_label = methodSelectRect;
@@ -216,7 +217,7 @@ namespace SerializableActions.Internal
             {
                 var methods = MethodLister.SerializeableMethodsOn(type);
                 var methodNames = new string[methods.Count + 1];
-                methodNames[0] = "None selected";
+                methodNames[0] = NoMethodSelected;
                 for (int i = 0; i < methods.Count; i++)
                 {
                     methodNames[i + 1] = methods[i].ToString();
