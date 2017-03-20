@@ -50,11 +50,11 @@ namespace SerializableActions.Internal
         private string paramAsJson;
 
         /// <summary>
-        /// A wrapper for the argument. This is how the argument is serialized if it is an UnityEngine.Object.
+        /// This stores the argument if it is a UnityEngine.Object.
         /// If the argument is something else, this is null
         /// </summary>
         [SerializeField]
-        private Object objectWrapper;
+        private Object objectArgument;
 
         /// <summary>
         /// The runtime value of the argument.
@@ -77,7 +77,7 @@ namespace SerializableActions.Internal
             {
                 if (isUnityObject)
                 {
-                    argumentValue = objectWrapper;
+                    argumentValue = objectArgument;
                 }
                 else
                 {
@@ -125,19 +125,19 @@ namespace SerializableActions.Internal
             if (isUnityObject)
             {
                 paramAsJson = "";
-                objectWrapper = argument as UnityEngine.Object;
+                objectArgument = argument as UnityEngine.Object;
             }
             else
             {
-                if (objectWrapper != null)
+                if (objectArgument != null)
                 {
                     if (Application.isPlaying)
-                        Object.Destroy(objectWrapper);
+                        Object.Destroy(objectArgument);
                     else
-                        Object.DestroyImmediate(objectWrapper);
+                        Object.DestroyImmediate(objectArgument);
                 }
 
-                objectWrapper = null;
+                objectArgument = null;
                 fsData data;
                 _serializer.TrySerialize(argumentType, argument, out data).AssertSuccess();
                 paramAsJson = fsJsonPrinter.CompressedJson(data);
