@@ -115,7 +115,21 @@ namespace SerializableActions.Internal
                 serMethods.Add(new SerializableMethod(method));
             }
 
+            serMethods.Sort(MethodComparer);
+
             return serMethods;
+        }
+
+        private static int MethodComparer(SerializableMethod method1, SerializableMethod method2)
+        {
+            var m1IsGetOrSet = IsGetter(method1.MethodInfo) || IsSetter(method1.MethodInfo);
+            var m2IsGetOrSet = IsGetter(method2.MethodInfo) || IsSetter(method2.MethodInfo);
+
+            if (m1IsGetOrSet == m2IsGetOrSet)
+                return method1.MethodName.CompareTo(method2.MethodName);
+            if (m1IsGetOrSet)
+                return 1;
+            return -1;
         }
 
         private static bool NeverInclude(MethodInfo method)
