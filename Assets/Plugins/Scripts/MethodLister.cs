@@ -124,7 +124,7 @@ namespace SerializableActions.Internal
             {
                 neverIncludes = new List<MethodInfo>
                 {
-                    typeof(MonoBehaviour).GetMethod("GetComponents", new[] { typeof(Type), typeof(List<Component>) })
+                    typeof(MonoBehaviour).GetMethod("GetComponents", new[] {typeof(Type), typeof(List<Component>)})
                 };
             }
 
@@ -133,29 +133,49 @@ namespace SerializableActions.Internal
 
         public static bool IsGetter(MethodInfo info)
         {
-            return info.DeclaringType.GetProperties().Any(prop => prop.GetGetMethod() == info);
+            return info.DeclaringType.GetProperties().Any(prop =>
+            {
+                var getter = prop.GetGetMethod();
+                if (getter == null) return false;
+                return getter.MethodHandle == info.MethodHandle;
+            });
         }
 
         public static bool IsSetter(MethodInfo info)
         {
-            return info.DeclaringType.GetProperties().Any(prop => prop.GetSetMethod() == info);
+            return info.DeclaringType.GetProperties().Any(prop =>
+            {
+                var setter = prop.GetSetMethod();
+                if (setter == null) return false;
+                return setter.MethodHandle == info.MethodHandle;
+            });
         }
 
-        private static PropertyInfo GetGetterFor(MethodInfo info)
+        private static PropertyInfo GetPropertyForGetter(MethodInfo info)
         {
-            return info.DeclaringType.GetProperties().FirstOrDefault(prop => prop.GetGetMethod() == info);
+            return info.DeclaringType.GetProperties().FirstOrDefault(prop =>
+            {
+                var getter = prop.GetGetMethod();
+                if (getter == null) return false;
+                return getter.MethodHandle == info.MethodHandle;
+            });
         }
 
-        private static PropertyInfo GetSetterFor(MethodInfo info)
+        private static PropertyInfo GetPropertyForSetter(MethodInfo info)
         {
-            return info.DeclaringType.GetProperties().FirstOrDefault(prop => prop.GetSetMethod() == info);
+            return info.DeclaringType.GetProperties().FirstOrDefault(prop =>
+            {
+                var setter = prop.GetSetMethod();
+                if (setter == null) return false;
+                return setter.MethodHandle == info.MethodHandle;
+            });
         }
 
         public static bool IsObsolete(MethodInfo info)
         {
             MemberInfo mInfo = info;
-            mInfo = (MemberInfo) GetGetterFor(info) ?? info;
-            mInfo = (MemberInfo) GetSetterFor(info) ?? info;
+            mInfo = mInfo ?? (MemberInfo) GetPropertyForGetter(info);
+            mInfo = mInfo ?? (MemberInfo) GetPropertyForSetter(info);
 
             return mInfo.GetCustomAttributes(typeof(ObsoleteAttribute), false).Length > 0;
         }
@@ -169,9 +189,9 @@ namespace SerializableActions.Internal
                     typeof(MonoBehaviour).GetMethod("Invoke"),
                     typeof(MonoBehaviour).GetMethod("InvokeRepeating"),
                     typeof(MonoBehaviour).GetMethod("CancelInvoke", new Type[0]),
-                    typeof(MonoBehaviour).GetMethod("CancelInvoke", new[] { typeof(string) }),
+                    typeof(MonoBehaviour).GetMethod("CancelInvoke", new[] {typeof(string)}),
                     typeof(MonoBehaviour).GetMethod("IsInvoking", new Type[0]),
-                    typeof(MonoBehaviour).GetMethod("IsInvoking", new[] { typeof(string) })
+                    typeof(MonoBehaviour).GetMethod("IsInvoking", new[] {typeof(string)})
                 };
             }
 
@@ -184,13 +204,13 @@ namespace SerializableActions.Internal
             {
                 coroutineMethods = new List<MethodInfo>
                 {
-                    typeof(MonoBehaviour).GetMethod("StartCoroutine", new[] { typeof(IEnumerator) }),
-                    typeof(MonoBehaviour).GetMethod("StartCoroutine", new[] { typeof(string) }),
-                    typeof(MonoBehaviour).GetMethod("StartCoroutine", new[] { typeof(string), typeof(UnityEngine.Object) }),
+                    typeof(MonoBehaviour).GetMethod("StartCoroutine", new[] {typeof(IEnumerator)}),
+                    typeof(MonoBehaviour).GetMethod("StartCoroutine", new[] {typeof(string)}),
+                    typeof(MonoBehaviour).GetMethod("StartCoroutine", new[] {typeof(string), typeof(UnityEngine.Object)}),
 
-                    typeof(MonoBehaviour).GetMethod("StopCoroutine", new[] { typeof(IEnumerator) }),
-                    typeof(MonoBehaviour).GetMethod("StopCoroutine", new[] { typeof(string) }),
-                    typeof(MonoBehaviour).GetMethod("StopCoroutine", new[] { typeof(Coroutine) }),
+                    typeof(MonoBehaviour).GetMethod("StopCoroutine", new[] {typeof(IEnumerator)}),
+                    typeof(MonoBehaviour).GetMethod("StopCoroutine", new[] {typeof(string)}),
+                    typeof(MonoBehaviour).GetMethod("StopCoroutine", new[] {typeof(Coroutine)}),
 
                     typeof(MonoBehaviour).GetMethod("StopAllCoroutines"),
                 };
@@ -223,20 +243,20 @@ namespace SerializableActions.Internal
             {
                 sendMessageMethods = new List<MethodInfo>
                 {
-                    typeof(MonoBehaviour).GetMethod("SendMessage", new[] { typeof(string) }),
-                    typeof(MonoBehaviour).GetMethod("SendMessage", new[] { typeof(string), typeof(object) }),
-                    typeof(MonoBehaviour).GetMethod("SendMessage", new[] { typeof(string), typeof(SendMessageOptions) }),
-                    typeof(MonoBehaviour).GetMethod("SendMessage", new[] { typeof(string), typeof(object), typeof(SendMessageOptions) }),
+                    typeof(MonoBehaviour).GetMethod("SendMessage", new[] {typeof(string)}),
+                    typeof(MonoBehaviour).GetMethod("SendMessage", new[] {typeof(string), typeof(object)}),
+                    typeof(MonoBehaviour).GetMethod("SendMessage", new[] {typeof(string), typeof(SendMessageOptions)}),
+                    typeof(MonoBehaviour).GetMethod("SendMessage", new[] {typeof(string), typeof(object), typeof(SendMessageOptions)}),
 
-                    typeof(MonoBehaviour).GetMethod("SendMessageUpwards", new[] { typeof(string) }),
-                    typeof(MonoBehaviour).GetMethod("SendMessageUpwards", new[] { typeof(string), typeof(object) }),
-                    typeof(MonoBehaviour).GetMethod("SendMessageUpwards", new[] { typeof(string), typeof(SendMessageOptions) }),
-                    typeof(MonoBehaviour).GetMethod("SendMessageUpwards", new[] { typeof(string), typeof(object), typeof(SendMessageOptions) }),
+                    typeof(MonoBehaviour).GetMethod("SendMessageUpwards", new[] {typeof(string)}),
+                    typeof(MonoBehaviour).GetMethod("SendMessageUpwards", new[] {typeof(string), typeof(object)}),
+                    typeof(MonoBehaviour).GetMethod("SendMessageUpwards", new[] {typeof(string), typeof(SendMessageOptions)}),
+                    typeof(MonoBehaviour).GetMethod("SendMessageUpwards", new[] {typeof(string), typeof(object), typeof(SendMessageOptions)}),
 
-                    typeof(MonoBehaviour).GetMethod("BroadcastMessage", new[] { typeof(string) }),
-                    typeof(MonoBehaviour).GetMethod("BroadcastMessage", new[] { typeof(string), typeof(object) }),
-                    typeof(MonoBehaviour).GetMethod("BroadcastMessage", new[] { typeof(string), typeof(SendMessageOptions) }),
-                    typeof(MonoBehaviour).GetMethod("BroadcastMessage", new[] { typeof(string), typeof(object), typeof(SendMessageOptions) }),
+                    typeof(MonoBehaviour).GetMethod("BroadcastMessage", new[] {typeof(string)}),
+                    typeof(MonoBehaviour).GetMethod("BroadcastMessage", new[] {typeof(string), typeof(object)}),
+                    typeof(MonoBehaviour).GetMethod("BroadcastMessage", new[] {typeof(string), typeof(SendMessageOptions)}),
+                    typeof(MonoBehaviour).GetMethod("BroadcastMessage", new[] {typeof(string), typeof(object), typeof(SendMessageOptions)}),
                 };
 
             }

@@ -147,16 +147,12 @@ namespace SerializableActions.Internal
         public override string ToString()
         {
             if (MethodInfo == null)
-            {
                 return "Null method";
-            }
+
             if (MethodLister.IsSetter(MethodInfo))
-            {
                 return string.Format("{0} ({1})", methodInfo.Name.Replace("_", " "), parameterTypes[0]);
-            }
 
             string printData = MethodInfo.Name;
-
             if (parameterTypes.Length > 0)
             {
                 printData += "(";

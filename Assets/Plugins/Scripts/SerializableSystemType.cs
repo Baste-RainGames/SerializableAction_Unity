@@ -21,7 +21,7 @@ namespace SerializableActions.Internal
         {
             get
             {
-                if (Name== "Single")
+                if (Name == "Single")
                     return "Float";
                 if (Name == "Int32")
                     return "Int";
@@ -32,12 +32,10 @@ namespace SerializableActions.Internal
 
         [SerializeField]
         private string m_AssemblyQualifiedName;
-
         public string AssemblyQualifiedName { get { return m_AssemblyQualifiedName; } }
 
         [SerializeField]
         private string m_AssemblyName;
-
         public string AssemblyName { get { return m_AssemblyName; } }
 
         private Type m_SystemType;

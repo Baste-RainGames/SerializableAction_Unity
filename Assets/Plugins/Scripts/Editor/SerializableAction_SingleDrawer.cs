@@ -173,18 +173,14 @@ namespace SerializableActions.Internal
                 }
             }
 
-            if (newNameIdx == 0)
+            var changed = EditorGUI.EndChangeCheck();
+            var noMethodSelected = newNameIdx == 0;
+            if (changed || noMethodSelected || action.Arguments.Length == 0)
             {
-                if (EditorGUI.EndChangeCheck())
+                if (changed)
                     property.SetDirty();
                 return;
             }
-
-            if (EditorGUI.EndChangeCheck())
-                property.SetDirty();
-
-            if (action.Arguments.Length == 0)
-                return;
 
             position = NextPosition(position, EditorGUIUtility.singleLineHeight);
             EditorGUI.indentLevel += 2;
