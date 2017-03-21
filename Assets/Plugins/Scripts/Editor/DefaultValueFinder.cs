@@ -1,10 +1,17 @@
 ﻿using System;
+using System.Linq;
+using Fasterflect;
+using FullSerializer;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace SerializableActions.Internal
 {
     public static class DefaultValueFinder
     {
+        private static fsData emptyfsJsonData = fsJsonParser.Parse("{}");
+        private static fsSerializer deserializer = new fsSerializer();
+
         public static object CreateDefaultFor(Type type)
         {
             if (type.IsValueType)
@@ -13,7 +20,12 @@ namespace SerializableActions.Internal
                 return new AnimationCurve();
             if (type == typeof(Color))
                 return Color.white;
-            return null;
+            if (typeof(Object).IsAssignableFrom(type))
+                return null;
+
+            object parseResult = null;
+            deserializer.TryDeserialize(emptyfsJsonData, type, ref parseResult);
+            return parseResult;
         }
     }
 }

@@ -24,7 +24,7 @@ namespace SerializableActions.Internal
             position.height = EditorGUIUtility.singleLineHeight;
             EditorGUI.LabelField(position, label);
             EditorGUI.indentLevel++;
-            position = NextPosition(position, EditorGUIUtility.singleLineHeight);
+            position = EditorUtil.NextPosition(position, EditorGUIUtility.singleLineHeight);
             DrawSerializableAction(position, property);
             EditorGUI.indentLevel--;
         }
@@ -50,7 +50,7 @@ namespace SerializableActions.Internal
             for (var i = 0; i < action.TargetMethod.ParameterTypes.Length; i++)
             {
                 var parameterType = action.TargetMethod.ParameterTypes[i];
-                finalPropHeight += SerializableArgumentDrawer.GetHeightForType(parameterType.SystemType, defaultHeight);
+                finalPropHeight += SerializableArgumentDrawer.GetHeightForType(parameterType.SystemType, defaultHeight, true);
             }
 
             return finalPropHeight;
@@ -77,7 +77,7 @@ namespace SerializableActions.Internal
             callStateRect.width *= .3f;
             action.callState = (UnityEventCallState) EditorGUI.EnumPopup(callStateRect, action.callState);
 
-            var objectRect = NextPosition(callStateRect, EditorGUIUtility.singleLineHeight);
+            var objectRect = EditorUtil.NextPosition(callStateRect, EditorGUIUtility.singleLineHeight);
             var newContainingObject = EditorGUI.ObjectField(objectRect, containingObject, typeof(Object), true);
 
             if (newContainingObject != containingObject)
@@ -129,7 +129,7 @@ namespace SerializableActions.Internal
             else
                 methodNames[0] = NoMethodSelected;
 
-            var methodSelectRect = NextPosition(objectSelectRect, EditorGUIUtility.singleLineHeight);
+            var methodSelectRect = EditorUtil.NextPosition(objectSelectRect, EditorGUIUtility.singleLineHeight);
             var methodSelectRect_label = methodSelectRect;
             var methodSelectRect_popup = methodSelectRect;
             methodSelectRect_label.width = 90f;
@@ -182,7 +182,7 @@ namespace SerializableActions.Internal
                 return;
             }
 
-            position = NextPosition(position, EditorGUIUtility.singleLineHeight);
+            position = EditorUtil.NextPosition(position, EditorGUIUtility.singleLineHeight);
             EditorGUI.indentLevel += 2;
 
             //Updating the serializedObject here syncs it with the changes from above
@@ -191,20 +191,13 @@ namespace SerializableActions.Internal
             for (int i = 0; i < parameters.arraySize; i++)
             {
                 var positionHeight = SerializableArgumentDrawer.GetHeightForType(action.Arguments[i].ParameterType.SystemType,
-                                                                                  EditorGUIUtility.singleLineHeight);
-                position = NextPosition(position, positionHeight);
+                                                                                  EditorGUIUtility.singleLineHeight, true);
+                position = EditorUtil.NextPosition(position, positionHeight);
                 EditorGUI.PropertyField(position, parameters.GetArrayElementAtIndex(i), true);
             }
             property.serializedObject.ApplyModifiedProperties();
 
             EditorGUI.indentLevel -= 2;
-        }
-
-        private static Rect NextPosition(Rect currentPosition, float nextPositionHeight)
-        {
-            currentPosition.y += currentPosition.height + 1;
-            currentPosition.height = nextPositionHeight;
-            return currentPosition;
         }
 
         private static void EnsureMethodsCached(Type type)
@@ -251,6 +244,5 @@ namespace SerializableActions.Internal
 
             currentSelectedIdx = Array.IndexOf(objectsOnContainer, targetObject);
         }
-
     }
 }

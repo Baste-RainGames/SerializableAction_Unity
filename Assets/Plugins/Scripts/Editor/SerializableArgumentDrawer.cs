@@ -13,7 +13,7 @@ namespace SerializableActions.Internal
         {
             var parameter = (SerializableArgument) SerializedPropertyHelper.GetTargetObjectOfProperty(property);
             var type = parameter.ParameterType.SystemType;
-            return GetHeightForType(type, base.GetPropertyHeight(property, label));
+            return GetHeightForType(type, base.GetPropertyHeight(property, label), true);
         }
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
@@ -25,8 +25,55 @@ namespace SerializableActions.Internal
             EditorGUI.BeginChangeCheck();
 
             //Ideally, this if/else chain should be solved with a PropertyField, but it's not possible to generate a
-            //SerializedProperty from an arbitrary object
+            //SerializedProperty from an arbitrary System.Object-field, which is what UnpackParameter returns.
 
+            obj = DrawObjectOfType(position, label, type, obj, true);
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                argument.SetArgumentValue(obj);
+                property.SetDirty();
+            }
+        }
+
+        public static float GetHeightForType(Type type, float defaultHeight, bool checkArbitraryTypes)
+        {
+            //nonstandard heights
+            if (type == typeof(Bounds))
+                return defaultHeight * 3f;
+            if (type == typeof(Rect))
+                return defaultHeight * 2f;
+
+            if (type == typeof(Color))
+                return defaultHeight;
+            if (type == typeof(AnimationCurve))
+                return defaultHeight;
+            if (type.IsEnum)
+                return defaultHeight;
+            if (type == typeof(float))
+                return defaultHeight;
+            if (type == typeof(int))
+                return defaultHeight;
+            if (type == typeof(string))
+                return defaultHeight;
+            if (type == typeof(bool))
+                return defaultHeight;
+            if (type == typeof(Vector2))
+                return defaultHeight;
+            if (type == typeof(Vector3))
+                return defaultHeight;
+            if (type == typeof(Vector4))
+                return defaultHeight;
+            if (type == typeof(Quaternion))
+                return defaultHeight;
+            if (typeof(Object).IsAssignableFrom(type))
+                return defaultHeight;
+
+            return checkArbitraryTypes ? UnknownObjectDrawer.HeightRequiredToDraw(type) : defaultHeight;
+        }
+
+        public static object DrawObjectOfType(Rect position, GUIContent label, Type type, object obj, bool tryDrawUnknownTypes)
+        {
             if (type == typeof(Bounds))
                 obj = EditorGUI.BoundsField(position, label, (Bounds) obj);
             else if (type == typeof(Color))
@@ -60,23 +107,15 @@ namespace SerializableActions.Internal
             else if (typeof(Object).IsAssignableFrom(type))
                 obj = EditorGUI.ObjectField(position, label, (Object) obj, type, true);
             else
-                EditorGUI.LabelField(position, "Can't create drawer for type " + type.Name);
-
-            if (EditorGUI.EndChangeCheck())
             {
-                argument.SetArgumentValue(obj);
-                property.SetDirty();
+                if (tryDrawUnknownTypes)
+                    obj = UnknownObjectDrawer.Draw(position, label, obj);
+                else
+                    EditorGUI.LabelField(position, "Can't draw object of type " + type);
             }
-        }
 
-        public static float GetHeightForType(Type type, float defaultHeight)
-        {
-            if (type == typeof(Bounds))
-                return defaultHeight * 3f;
-            if (type == typeof(Rect))
-                return defaultHeight * 2f;
-
-            return defaultHeight;
+            return obj;
         }
     }
+
 }
