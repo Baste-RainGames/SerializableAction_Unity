@@ -50,7 +50,7 @@ namespace SerializableActions.Internal
             for (var i = 0; i < action.TargetMethod.ParameterTypes.Length; i++)
             {
                 var parameterType = action.TargetMethod.ParameterTypes[i];
-                finalPropHeight += SerializableArgumentDrawer.GetHeightForType(parameterType.SystemType, defaultHeight, true);
+                finalPropHeight += SerializableArgumentDrawer.GetHeightForType(parameterType.SystemType, defaultHeight, 0);
             }
 
             return finalPropHeight;
@@ -185,7 +185,7 @@ namespace SerializableActions.Internal
             for (int i = 0; i < parameters.arraySize; i++)
             {
                 var positionHeight = SerializableArgumentDrawer.GetHeightForType(action.Arguments[i].ParameterType.SystemType,
-                                                                                 EditorGUIUtility.singleLineHeight, true);
+                                                                                 EditorGUIUtility.singleLineHeight, 0);
                 position = EditorUtil.NextPosition(position, positionHeight);
                 EditorGUI.PropertyField(position, parameters.GetArrayElementAtIndex(i), true);
             }

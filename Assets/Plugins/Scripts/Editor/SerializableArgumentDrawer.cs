@@ -13,7 +13,7 @@ namespace SerializableActions.Internal
         {
             var parameter = (SerializableArgument) SerializedPropertyHelper.GetTargetObjectOfProperty(property);
             var type = parameter.ParameterType.SystemType;
-            return GetHeightForType(type, EditorGUIUtility.singleLineHeight + 1f, true);
+            return GetHeightForType(type, EditorGUIUtility.singleLineHeight + 1f, 0);
         }
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
@@ -24,10 +24,7 @@ namespace SerializableActions.Internal
             label = new GUIContent(argument.ParameterType.NiceName + " " + argument.Name);
             EditorGUI.BeginChangeCheck();
 
-            //Ideally, this if/else chain should be solved with a PropertyField, but it's not possible to generate a
-            //SerializedProperty from an arbitrary System.Object-field, which is what UnpackParameter returns.
-
-            obj = DrawObjectOfType(position, label, type, obj, true);
+            obj = DrawObjectOfType(position, label, type, obj, 0);
 
             if (EditorGUI.EndChangeCheck())
             {
@@ -36,8 +33,9 @@ namespace SerializableActions.Internal
             }
         }
 
-        public static float GetHeightForType(Type type, float defaultHeight, bool checkArbitraryTypes)
+        public static float GetHeightForType(Type type, float defaultHeight, int depth)
         {
+
             //nonstandard heights
             if (type == typeof(Bounds))
                 return defaultHeight * 3f;
@@ -69,11 +67,15 @@ namespace SerializableActions.Internal
             if (typeof(Object).IsAssignableFrom(type))
                 return defaultHeight;
 
-            return checkArbitraryTypes ? UnknownObjectDrawer.HeightRequiredToDraw(type) : defaultHeight;
+            return depth < SerializableSystemType.MaxSerializationDepth ? FieldUtil.HeightRequiredToDraw(type, depth + 1) : defaultHeight;
         }
 
-        public static object DrawObjectOfType(Rect position, GUIContent label, Type type, object obj, bool tryDrawUnknownTypes)
+        public static object DrawObjectOfType(Rect position, GUIContent label, Type type, object obj, int depth)
         {
+
+            //Ideally, this if/else chain should be solved with a PropertyField, but it's not possible to generate a
+            //SerializedProperty from an arbitrary System.Object-field, which is what UnpackParameter returns.
+
             if (type == typeof(Bounds))
                 obj = EditorGUI.BoundsField(position, label, (Bounds) obj);
             else if (type == typeof(Color))
@@ -108,10 +110,10 @@ namespace SerializableActions.Internal
                 obj = EditorGUI.ObjectField(position, label, (Object) obj, type, true);
             else
             {
-                if (tryDrawUnknownTypes)
-                    obj = UnknownObjectDrawer.Draw(position, label, obj);
+                if (depth < SerializableSystemType.MaxSerializationDepth)
+                    obj = UnknownObjectDrawer.Draw(position, label, obj, depth);
                 else
-                    EditorGUI.LabelField(position, "Can't draw object of type " + type);
+                    EditorGUI.LabelField(position, "Type with recursive depth greater than 7 detected!!" + type);
             }
 
             return obj;

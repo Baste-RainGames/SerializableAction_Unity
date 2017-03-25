@@ -13,6 +13,11 @@ namespace SerializableActions.Internal
     [Serializable]
     public class SerializableSystemType
     {
+        /// <summary>
+        /// The max depth of serialization in the system. Matches Unity's max depth.
+        /// </summary>
+        public const int MaxSerializationDepth = 7;
+
         [SerializeField]
         private string m_Name;
 
@@ -58,6 +63,8 @@ namespace SerializableActions.Internal
 
         public SerializableSystemType(Type _SystemType)
         {
+            if(_SystemType == null)
+                throw new ArgumentNullException("_SystemType");
             m_SystemType = _SystemType;
             m_Name = _SystemType.Name;
             m_AssemblyQualifiedName = _SystemType.AssemblyQualifiedName;
@@ -76,6 +83,8 @@ namespace SerializableActions.Internal
 
         public bool Equals(SerializableSystemType _Object)
         {
+            if (_Object == null)
+                return false;
             return SystemType.Equals(_Object.SystemType);
         }
 
