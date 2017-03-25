@@ -9,12 +9,10 @@ namespace SerializableActions.Internal
 {
     /// <summary>
     /// This is a serialized wrapper around a single action that can be drawn in the inspector.
-    /// It's recommended to use the SerializableAction instead, as it support an arbitrary number of arguments.
     /// </summary>
     [Serializable]
     public class SerializableAction_Single : ISerializationCallbackReceiver
     {
-
         [SerializeField]
         private SerializableArgument[] arguments;
         [SerializeField]
@@ -57,6 +55,11 @@ namespace SerializableActions.Internal
 
         public void Invoke()
         {
+            if (callState == UnityEventCallState.RuntimeOnly && !Application.isPlaying)
+                return;
+            if (callState == UnityEventCallState.Off)
+                return;
+
             if (!methodDeleted)
                 invoker.Invoke(targetObject, argumentList);
             else

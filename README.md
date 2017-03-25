@@ -43,34 +43,6 @@ A .dll version will (probably) be made available pretty soon.
 
 ## Limitations
 
-SerializableAction can draw methods where all the arguments are of a type that:
-- is a primitive or string -or-
-- is a UnityEngine.Object -or-
-- is a [Serializable] struct or class where all the fields are either of the other types or UnityEngine.Objects
-
-This means that in the following code, you can assign Foo to a SerializableAction, but not Bar:
-
-```c#
-public void Foo(Person p) { ... }
-public void Bar(PersonWrapper) { ... }
-
-[Serializable]
-public class Person
-{
-    public string name;
-    public int age;
-}
-
-[Serializable]
-public class PersonWrapper
-{
-    public string data;
-    public Person person;
-}
-```
-
-This restriction will probably be fixed soonish - I'll just have to figure out how to handle infinite recursion. No biggie.
-
 Fields are not supported for now. So while you can use a property setter, you can't set a public field. This should be fixed pretty soon.
 
 Generic methods are not supported. Supporting this is not hard from an implementation standpoint (it already works in the back-end), but figuring out how to draw a selector for the type parameters is harder. It will probably never be supported directly, but some other solution might show up (see Future plans)
