@@ -158,13 +158,9 @@ namespace SerializableActions.Internal
                         object value;
                         if (oldMethod != null && oldParameters != null && i < oldParameters.Length &&
                             oldMethod.ParameterTypes[i].Equals(targetMethod.ParameterTypes[i]))
-                        {
                             value = oldParameters[i].UnpackParameter();
-                        }
                         else
-                        {
                             value = DefaultValueFinder.CreateDefaultFor(targetMethod.ParameterTypes[i].SystemType);
-                        }
 
                         action.Arguments[i] = new SerializableArgument(value,
                                                                        targetMethod.ParameterTypes[i].SystemType,
@@ -185,13 +181,11 @@ namespace SerializableActions.Internal
             position = EditorUtil.NextPosition(position, EditorGUIUtility.singleLineHeight);
             EditorGUI.indentLevel += 2;
 
-            //Updating the serializedObject here syncs it with the changes from above
-//            property.serializedObject.Update();
             var parameters = property.FindPropertyRelative("arguments");
             for (int i = 0; i < parameters.arraySize; i++)
             {
                 var positionHeight = SerializableArgumentDrawer.GetHeightForType(action.Arguments[i].ParameterType.SystemType,
-                                                                                  EditorGUIUtility.singleLineHeight, true);
+                                                                                 EditorGUIUtility.singleLineHeight, true);
                 position = EditorUtil.NextPosition(position, positionHeight);
                 EditorGUI.PropertyField(position, parameters.GetArrayElementAtIndex(i), true);
             }
@@ -209,12 +203,42 @@ namespace SerializableActions.Internal
                 methodNames[0] = NoMethodSelected;
                 for (int i = 0; i < methods.Count; i++)
                 {
-                    methodNames[i + 1] = methods[i].ToString();
+                    methodNames[i + 1] = MethodName(methods[i]);
                 }
 
                 typeToMethod[type] = methods;
                 typeToMethodNames[type] = methodNames;
             }
+        }
+
+        private static string MethodName(SerializableMethod method)
+        {
+            var methodInfo = method.MethodInfo;
+            if (methodInfo == null)
+                return "Null method";
+
+            var parameterTypes = method.ParameterTypes;
+            var parameterNames = method.ParameterNames;
+            if (MethodLister.IsSetter(methodInfo))
+                return string.Format("{0} ({1})", methodInfo.Name.Replace("_", " "), parameterTypes[0]);
+
+            string printData = methodInfo.Name;
+            if (parameterTypes.Length > 0)
+            {
+                printData += "(";
+                for (var i = 0; i < parameterTypes.Length; i++)
+                {
+                    printData += string.Format("{0} {1}", parameterTypes[i], parameterNames[i]);
+                    if (i != parameterTypes.Length - 1)
+                        printData += ", ";
+                }
+                printData += ")";
+            }
+            if (methodInfo.ReturnType != typeof(void))
+            {
+                printData += " => " + methodInfo.ReturnType.Name;
+            }
+            return printData;
         }
 
         private static void ReadyObjectSelectDropdown(Object containingObject, Object targetObject,
@@ -223,8 +247,8 @@ namespace SerializableActions.Internal
             //Has dragged-and-dropped something else.
             if (!(containingObject is GameObject))
             {
-                objectsOnContainer = new[] {containingObject};
-                objectNames = new[] {containingObject.GetType().Name};
+                objectsOnContainer = new[] { containingObject };
+                objectNames = new[] { containingObject.GetType().Name };
                 currentSelectedIdx = 0;
                 return;
             }

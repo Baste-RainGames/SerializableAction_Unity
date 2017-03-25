@@ -24,7 +24,15 @@ namespace SerializableActions.Internal
                 return null;
 
             object parseResult = null;
-            deserializer.TryDeserialize(emptyfsJsonData, type, ref parseResult);
+            try
+            {
+                deserializer.TryDeserialize(emptyfsJsonData, type, ref parseResult).AssertSuccess();
+            }
+            catch (Exception)
+            {
+                //Deserialization failed, parseResult is now garbage.
+                return null;
+            }
             return parseResult;
         }
     }

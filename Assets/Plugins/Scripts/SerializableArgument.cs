@@ -110,7 +110,7 @@ namespace SerializableActions.Internal
             else
             {
                 if (argument != null && !parameterType.SystemType.IsInstanceOfType(argument))
-                    throw new ArgumentException("Trying to assign " + argument + " of type " + argument.GetType() +
+                    throw new ArgumentException("Trying to assign " + argument + " of type " + argument.GetType().Name +
                                                 " to SerializeableParameter expecting type " +
                                                 parameterType.Name + ", which is not valid! Use the type or a subtype");
             }

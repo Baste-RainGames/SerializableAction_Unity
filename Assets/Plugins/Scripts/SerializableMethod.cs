@@ -144,33 +144,6 @@ namespace SerializableActions.Internal
             return true;
         }
 
-        public override string ToString()
-        {
-            if (MethodInfo == null)
-                return "Null method";
-
-            if (MethodLister.IsSetter(MethodInfo))
-                return string.Format("{0} ({1})", methodInfo.Name.Replace("_", " "), parameterTypes[0]);
-
-            string printData = MethodInfo.Name;
-            if (parameterTypes.Length > 0)
-            {
-                printData += "(";
-                for (var i = 0; i < parameterTypes.Length; i++)
-                {
-                    printData += string.Format("{0} {1}", parameterTypes[i], parameterNames[i]);
-                    if (i != parameterTypes.Length - 1)
-                        printData += ", ";
-                }
-                printData += ")";
-            }
-            if (MethodInfo.ReturnType != typeof(void))
-            {
-                printData += " => " + MethodInfo.ReturnType.Name;
-            }
-            return printData;
-        }
-
         protected bool Equals(SerializableMethod other)
         {
             return string.Equals(methodName, other.methodName) &&
