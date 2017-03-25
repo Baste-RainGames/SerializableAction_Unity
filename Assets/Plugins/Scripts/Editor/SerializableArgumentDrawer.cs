@@ -13,7 +13,7 @@ namespace SerializableActions.Internal
         {
             var parameter = (SerializableArgument) SerializedPropertyHelper.GetTargetObjectOfProperty(property);
             var type = parameter.ParameterType.SystemType;
-            return GetHeightForType(type, base.GetPropertyHeight(property, label), true);
+            return GetHeightForType(type, EditorGUIUtility.singleLineHeight + 1f, true);
         }
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)

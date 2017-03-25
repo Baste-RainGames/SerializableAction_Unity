@@ -53,10 +53,27 @@ namespace SerializableActions.Internal
         private static void CacheDrawableFieldsFor(Type t)
         {
             var drawableFields = new List<FieldInfo>();
+            var typeStack = new Stack<Type>();
+            var current = t;
+            while (current != null)
+            {
+                typeStack.Push(current);
+                current = current.BaseType;
+            }
 
-            var allFields = t.GetFields(BindingFlags.Instance | BindingFlags.Public);
-            foreach (var field in allFields)
-                drawableFields.Add(field);
+            while (typeStack.Count > 0)
+            {
+                current = typeStack.Pop();
+                var allFields = current.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                foreach (var field in allFields)
+                {
+                    if (field.IsPublic)
+                        drawableFields.Add(field);
+                    else if (field.GetCustomAttributes(typeof(SerializeField), true).Length > 0)
+                        drawableFields.Add(field);
+
+                }
+            }
 
             drawableFieldsForType[t] = drawableFields;
         }
@@ -64,8 +81,8 @@ namespace SerializableActions.Internal
         private static void CacheRequiredHeightFor(Type type)
         {
             heightRequiredToDrawType[type] =
-                EditorGUIUtility.singleLineHeight +
-                DrawableFields(type).Sum(field => SerializableArgumentDrawer.GetHeightForType(type, EditorGUIUtility.singleLineHeight, false));
+                EditorGUIUtility.singleLineHeight + 1 +
+                DrawableFields(type).Sum(field => SerializableArgumentDrawer.GetHeightForType(type, EditorGUIUtility.singleLineHeight + 1, false));
         }
     }
 }

@@ -73,8 +73,6 @@ This restriction will probably be fixed soonish - I'll just have to figure out h
 
 Fields are not supported for now. So while you can use a property setter, you can't set a public field. This should be fixed pretty soon.
 
-Arguments of custom types (Like the person type over) can't have private fields with the [SerializeField] attribute. This should also be fixed soonish.
-
 Generic methods are not supported. Supporting this is not hard from an implementation standpoint (it already works in the back-end), but figuring out how to draw a selector for the type parameters is harder. It will probably never be supported directly, but some other solution might show up (see Future plans)
 
 ## Future plans
