@@ -13,8 +13,9 @@ namespace SerializableActions.Internal
     [CustomPropertyDrawer(typeof(SerializableAction_Single))]
     public class SerializableAction_SingleDrawer : PropertyDrawer
     {
-        private static Dictionary<Type, List<SerializableMethod>> typeToMethods = new Dictionary<Type, List<SerializableMethod>>();
-        private static Dictionary<Type, string[]> typeToNames = new Dictionary<Type, string[]>();
+        private static readonly Dictionary<Type, List<SerializableMethod>> typeToMethods = new Dictionary<Type, List<SerializableMethod>>();
+        private static readonly Dictionary<Type, List<SerializableFieldSetter>> typeToFields = new Dictionary<Type, List<SerializableFieldSetter>>();
+        private static readonly Dictionary<Type, string[]> typeToNames = new Dictionary<Type, string[]>();
         private const string NoMethodSelected = "None";
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
@@ -42,17 +43,24 @@ namespace SerializableActions.Internal
 
             //label + object field + method field. 1 less if there's no label
             var propHeightWithMethod = defaultHeight * (label == GUIContent.none ? 2 : 3);
-            if (action.TargetMethod == null || action.TargetMethod.MethodInfo == null)
+            var target = action.Target;
+            if (target == null || !target.HasTarget)
                 return propHeightWithMethod;
 
-            var parameterCount = action.TargetMethod.ParameterTypes.Length;
+            if (!target.IsMethod)
+            {
+                return propHeightWithMethod + SerializableArgumentDrawer.GetHeightForType(target.TargetFieldSetter.FieldType, defaultHeight, 0);
+            }
+
+            var targetMethod = target.TargetMethod;
+            var parameterCount = targetMethod.ParameterTypes.Length;
             if (parameterCount == 0)
                 return propHeightWithMethod;
 
             var finalPropHeight = propHeightWithMethod;
-            for (var i = 0; i < action.TargetMethod.ParameterTypes.Length; i++)
+            for (var i = 0; i < targetMethod.ParameterTypes.Length; i++)
             {
-                var parameterType = action.TargetMethod.ParameterTypes[i];
+                var parameterType = targetMethod.ParameterTypes[i];
                 finalPropHeight += SerializableArgumentDrawer.GetHeightForType(parameterType.SystemType, defaultHeight, 0);
             }
 
@@ -113,7 +121,7 @@ namespace SerializableActions.Internal
             {
                 objectIdx = newIdx;
                 action.TargetObject = objectsOnContainer[objectIdx];
-                action.TargetMethod = null;
+                action.Target = null;
                 action.Arguments = null;
             }
 
@@ -121,43 +129,68 @@ namespace SerializableActions.Internal
             EnsureDataCached(type);
 
             var methods = typeToMethods[type];
-            var currentIdx = methods.IndexOf(action.TargetMethod);
-            var nameIdx = currentIdx + 1;
-
+            var fields = typeToFields[type];
             var methodAndFieldNames = typeToNames[type];
 
+            int methodIdx = 0, fieldIdx = 0, nameIdx = 0;
+            bool isDeleted = false;
+
+            var target = action.Target;
+            //@TODO: This might never be null due to Unity's inspector always initializing fields.
+            if (target != null)
+            {
+                if (target.IsMethod)
+                {
+                    fieldIdx = -1;
+                    methodIdx = methods.IndexOf(target.TargetMethod);
+                    nameIdx = methodIdx + 1;
+
+                    isDeleted = methodIdx == -1 && !string.IsNullOrEmpty(target.TargetMethod.MethodName);
+                }
+                else
+                {
+                    methodIdx = -1;
+                    fieldIdx = fields.IndexOf(target.TargetFieldSetter);
+                    nameIdx = fieldIdx == -1 ? 0 : fieldIdx + 1 + methods.Count;
+
+                    isDeleted = fieldIdx == -1 && !string.IsNullOrEmpty(target.TargetFieldSetter.FieldName);
+                }
+            }
+
+
+
             //Detect deleted method
-            if (currentIdx == -1 && action.TargetMethod != null && !string.IsNullOrEmpty(action.TargetMethod.MethodName))
-                methodAndFieldNames[0] = "Deleted method! Old name: " + action.TargetMethod.MethodName;
+            if (isDeleted)
+                methodAndFieldNames[0] = string.Format("Deleted {0}! Old name: {1}", target.IsMethod ? "Method" : "Field", target.Name);
             else
                 methodAndFieldNames[0] = NoMethodSelected;
 
-            var methodSelectRect = EditorUtil.NextPosition(objectSelectRect, EditorGUIUtility.singleLineHeight);
-            var methodSelectRect_label = methodSelectRect;
-            var methodSelectRect_popup = methodSelectRect;
-            methodSelectRect_label.width = 90f;
-            methodSelectRect_popup.xMin = methodSelectRect_label.xMax + 5f;
+            var actionSelectRect = EditorUtil.NextPosition(objectSelectRect, EditorGUIUtility.singleLineHeight);
+            var actionSelectRect_label = actionSelectRect;
+            var actionSelectRect_popup = actionSelectRect;
+            actionSelectRect_label.width = 90f;
+            actionSelectRect_popup.xMin = actionSelectRect_label.xMax + 5f;
 
-            EditorGUI.LabelField(methodSelectRect_label, "Target Method:");
-            var newNameIdx = EditorGUI.Popup(methodSelectRect_popup, nameIdx, methodAndFieldNames);
+            EditorGUI.LabelField(actionSelectRect_label, "Target action:");
+            var newNameIdx = EditorGUI.Popup(actionSelectRect_popup, nameIdx, methodAndFieldNames);
 
             if (newNameIdx != nameIdx)
             {
                 //Selected "None", clear target method
                 if (newNameIdx == 0)
                 {
-                    action.TargetMethod = null;
+                    action.Target = null;
                     action.Arguments = new SerializableArgument[0];
                 }
                 //Selected a method or a setter
                 else if (newNameIdx < methods.Count + 1)
                 {
-                    var oldMethod = action.TargetMethod;
+                    var oldMethod = action.Target.TargetMethod;
                     var targetMethod = methods[newNameIdx - 1];
-                    action.TargetMethod = targetMethod;
+                    action.Target.TargetMethod = targetMethod;
 
                     var oldParameters = action.Arguments;
-                    action.Arguments = new SerializableArgument[action.TargetMethod.ParameterTypes.Length];
+                    action.Arguments = new SerializableArgument[targetMethod.ParameterTypes.Length];
                     for (int i = 0; i < action.Arguments.Length; i++)
                     {
                         object value;
@@ -175,7 +208,7 @@ namespace SerializableActions.Internal
                 //Selected a field
                 else
                 {
-                    Debug.Log("Selected a field!");
+                    action.Target.TargetFieldSetter = fields[newNameIdx - methods.Count - 1];
                 }
             }
 
@@ -219,6 +252,7 @@ namespace SerializableActions.Internal
                 var fields = FieldUtil.SerializableFields(type);
 
                 typeToMethods[type] = methods;
+                typeToFields[type] = fields.Select(field => new SerializableFieldSetter(field)).ToList();
                 typeToNames[type] = methodNames.Concat(fields.Select(ShowFieldName)).ToArray();
             }
         }

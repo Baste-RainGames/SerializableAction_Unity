@@ -18,7 +18,7 @@ namespace SerializableActions.Internal
         [SerializeField]
         private Object targetObject;
         [SerializeField]
-        private SerializableMethod targetMethod;
+        private SerializableActionTarget target;
         public UnityEventCallState callState;
 
         /// <summary>
@@ -29,7 +29,7 @@ namespace SerializableActions.Internal
         /// <summary>
         /// The serialized action
         /// </summary>
-        public SerializableMethod TargetMethod { get { return targetMethod; } set { targetMethod = value; } }
+        public SerializableActionTarget Target { get { return target; } set { target = value; } }
 
         /// <summary>
         /// Arguments the serialized action will be invoked with.
@@ -37,20 +37,34 @@ namespace SerializableActions.Internal
         public SerializableArgument[] Arguments { get { return arguments; } set { arguments = value; } }
 
         private object[] argumentList;
-        private MethodInvoker invoker;
+        private MethodInvoker methodInvoker;
+        private AttributeSetter fieldSetter;
         private bool methodDeleted;
 
-        public SerializableAction_Single(Object targetObject, SerializableMethod targetMethod, params object[] parameters)
+        public SerializableAction_Single(Object targetObject, SerializableMethod target, params object[] parameters)
         {
-            Assert.AreEqual(targetMethod.ParameterTypes.Length, parameters.Length);
+            Assert.AreEqual(target.ParameterTypes.Length, parameters.Length);
+            for (var i = 0; i < target.ParameterTypes.Length; i++)
+            {
+                var parameterType = target.ParameterTypes[i];
+                Assert.IsTrue((parameters[i] == null && !parameterType.SystemType.IsValueType)|| parameterType.SystemType.IsInstanceOfType(parameters[i]));
+            }
 
             this.targetObject = targetObject;
-            this.targetMethod = targetMethod;
+            this.target = new SerializableActionTarget(target);
             arguments = new SerializableArgument[parameters.Length];
             for (int i = 0; i < arguments.Length; i++)
             {
-                arguments[i] = new SerializableArgument(parameters[i], parameters[i].GetType(), targetMethod.ParameterNames[i]);
+                arguments[i] = new SerializableArgument(parameters[i], parameters[i].GetType(), target.ParameterNames[i]);
             }
+        }
+
+        public SerializableAction_Single(Object targetObject, SerializableFieldSetter target, object parameter)
+        {
+            Assert.IsTrue((parameter == null && !target.FieldType.IsValueType) || target.FieldType.IsInstanceOfType(parameter));
+            this.targetObject = targetObject;
+            this.target = new SerializableActionTarget(target);
+            arguments = new[] { new SerializableArgument(parameter, parameter.GetType(), "Field?") }; //@TODO: figure out name
         }
 
         public void Invoke()
@@ -61,9 +75,14 @@ namespace SerializableActions.Internal
                 return;
 
             if (!methodDeleted)
-                invoker.Invoke(targetObject, argumentList);
+            {
+                if (methodInvoker != null)
+                    methodInvoker.Invoke(targetObject, argumentList);
+                else
+                    fieldSetter.Invoke(targetObject, argumentList[0]);
+            }
             else
-                Debug.LogWarning("Trying to invoke SerializableAction, but the serialized method " + targetMethod.MethodName + " has been deleted!");
+                Debug.LogWarning("Trying to invoke SerializableAction, but the serialized action target " + target.Name + " has been deleted!");
         }
 
         public void OnBeforeSerialize()
@@ -82,9 +101,20 @@ namespace SerializableActions.Internal
             methodDeleted = false;
             try
             {
-                invoker = TargetObject.GetType().DelegateForInvoke(TargetMethod.MethodName, paramTypeList);
+                if (target.IsMethod)
+                {
+                    methodInvoker = TargetObject.GetType().DelegateForInvoke(Target.TargetMethod.MethodName, paramTypeList);
+                }
+                else
+                {
+                    TargetObject.GetType().DelegateForSetField(Target.TargetFieldSetter.FieldName);
+                }
             }
             catch (MissingMethodException)
+            {
+                methodDeleted = true;
+            }
+            catch (MissingFieldException)
             {
                 methodDeleted = true;
             }
