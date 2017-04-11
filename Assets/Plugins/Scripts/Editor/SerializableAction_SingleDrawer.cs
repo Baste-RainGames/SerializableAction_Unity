@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Text;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
@@ -10,8 +13,8 @@ namespace SerializableActions.Internal
     [CustomPropertyDrawer(typeof(SerializableAction_Single))]
     public class SerializableAction_SingleDrawer : PropertyDrawer
     {
-        private static Dictionary<Type, List<SerializableMethod>> typeToMethod = new Dictionary<Type, List<SerializableMethod>>();
-        private static Dictionary<Type, string[]> typeToMethodNames = new Dictionary<Type, string[]>();
+        private static Dictionary<Type, List<SerializableMethod>> typeToMethods = new Dictionary<Type, List<SerializableMethod>>();
+        private static Dictionary<Type, string[]> typeToNames = new Dictionary<Type, string[]>();
         private const string NoMethodSelected = "None";
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
@@ -115,19 +118,19 @@ namespace SerializableActions.Internal
             }
 
             var type = action.TargetObject.GetType();
-            EnsureMethodsCached(type);
+            EnsureDataCached(type);
 
-            var methods = typeToMethod[type];
+            var methods = typeToMethods[type];
             var currentIdx = methods.IndexOf(action.TargetMethod);
             var nameIdx = currentIdx + 1;
 
-            var methodNames = typeToMethodNames[type];
+            var methodAndFieldNames = typeToNames[type];
 
             //Detect deleted method
             if (currentIdx == -1 && action.TargetMethod != null && !string.IsNullOrEmpty(action.TargetMethod.MethodName))
-                methodNames[0] = "Deleted method! Old name: " + action.TargetMethod.MethodName;
+                methodAndFieldNames[0] = "Deleted method! Old name: " + action.TargetMethod.MethodName;
             else
-                methodNames[0] = NoMethodSelected;
+                methodAndFieldNames[0] = NoMethodSelected;
 
             var methodSelectRect = EditorUtil.NextPosition(objectSelectRect, EditorGUIUtility.singleLineHeight);
             var methodSelectRect_label = methodSelectRect;
@@ -136,16 +139,18 @@ namespace SerializableActions.Internal
             methodSelectRect_popup.xMin = methodSelectRect_label.xMax + 5f;
 
             EditorGUI.LabelField(methodSelectRect_label, "Target Method:");
-            var newNameIdx = EditorGUI.Popup(methodSelectRect_popup, nameIdx, methodNames);
+            var newNameIdx = EditorGUI.Popup(methodSelectRect_popup, nameIdx, methodAndFieldNames);
 
             if (newNameIdx != nameIdx)
             {
+                //Selected "None", clear target method
                 if (newNameIdx == 0)
                 {
                     action.TargetMethod = null;
                     action.Arguments = new SerializableArgument[0];
                 }
-                else
+                //Selected a method or a setter
+                else if (newNameIdx < methods.Count + 1)
                 {
                     var oldMethod = action.TargetMethod;
                     var targetMethod = methods[newNameIdx - 1];
@@ -166,6 +171,11 @@ namespace SerializableActions.Internal
                                                                        targetMethod.ParameterTypes[i].SystemType,
                                                                        targetMethod.ParameterNames[i]);
                     }
+                }
+                //Selected a field
+                else
+                {
+                    Debug.Log("Selected a field!");
                 }
             }
 
@@ -194,9 +204,9 @@ namespace SerializableActions.Internal
             EditorGUI.indentLevel -= 2;
         }
 
-        private static void EnsureMethodsCached(Type type)
+        private static void EnsureDataCached(Type type)
         {
-            if (!typeToMethod.ContainsKey(type))
+            if (!typeToMethods.ContainsKey(type))
             {
                 var methods = MethodLister.SerializeableMethodsOn(type);
                 var methodNames = new string[methods.Count + 1];
@@ -206,9 +216,16 @@ namespace SerializableActions.Internal
                     methodNames[i + 1] = MethodName(methods[i]);
                 }
 
-                typeToMethod[type] = methods;
-                typeToMethodNames[type] = methodNames;
+                var fields = FieldUtil.SerializableFields(type);
+
+                typeToMethods[type] = methods;
+                typeToNames[type] = methodNames.Concat(fields.Select(ShowFieldName)).ToArray();
             }
+        }
+
+        private static string ShowFieldName(FieldInfo field)
+        {
+            return string.Format("Set {0} ({1})", field.Name, Util.PrettifyTypeName(field.FieldType.Name));
         }
 
         private static string MethodName(SerializableMethod method)
@@ -220,20 +237,24 @@ namespace SerializableActions.Internal
             var parameterTypes = method.ParameterTypes;
             var parameterNames = method.ParameterNames;
             if (MethodLister.IsSetter(methodInfo))
-                return string.Format("{0} ({1})", methodInfo.Name.Replace("_", " "), parameterTypes[0]);
+            {
+                var nameBuilder = new StringBuilder(methodInfo.Name.Replace("_", " "));
+                nameBuilder[0] = 'S'; //Upper case "set"
+                return string.Format("{0} ({1})", nameBuilder.ToString(), parameterTypes[0]);
+            }
 
             string printData = methodInfo.Name;
+            printData += "(";
             if (parameterTypes.Length > 0)
             {
-                printData += "(";
                 for (var i = 0; i < parameterTypes.Length; i++)
                 {
                     printData += string.Format("{0} {1}", parameterTypes[i], parameterNames[i]);
                     if (i != parameterTypes.Length - 1)
                         printData += ", ";
                 }
-                printData += ")";
             }
+            printData += ")";
             if (methodInfo.ReturnType != typeof(void))
             {
                 printData += " => " + methodInfo.ReturnType.Name;

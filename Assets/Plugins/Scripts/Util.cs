@@ -36,13 +36,64 @@ namespace SerializableActions.Internal
                 if (t == null)
                     builder.Append("null");
                 else if (t is IEnumerable<T>)
-                    builder.Append(((IEnumerable<T>) t).PrettyPrint());
+                    builder.Append(((IEnumerable<T>) t).PrettyPrint(printFunc:printFunc));
                 else
                 {
                     if (printFunc == null)
                         builder.Append(t);
                     else
                         builder.Append(printFunc(t));
+                }
+
+                builder.Append(newLines ? "\n " : ", ");
+            }
+
+            if (added) //removes the trailing ", "
+                builder.Remove(builder.Length - 2, 2);
+            builder.Append("]");
+
+            return builder.ToString();
+        }
+
+        /// <summary>
+        /// Returns a pretty string representation of an Array. Or anything else that's IEnumerable. Like a list or whatever.
+        ///
+        /// Does basic [element,element] formatting, and also does recursive calls to inner lists. You can also give it a functon to
+        /// do even prettier printing, usefull to get IE. a GameObject's name instead of "name (UnityEngine.GameObject)". If the function
+        /// isn't supplied, toString is used.
+        ///
+        /// Also turns null into "null" instead of ""
+        ///
+        /// Will cause a stack overflow if you put list A in list B and list B in list A, but you wouldn't do that, would you?
+        /// </summary>
+        /// <param name="array">Some array</param>
+        /// <param name="newLines">Set to true if the elements should be separated with a newline</param>
+        /// <param name="printFunc">An optional function that you can use in place of ToString</param>
+        /// <typeparam name="T">The type of the array</typeparam>
+        /// <returns>a pretty printing of the array</returns>
+        public static string PrettyPrint<T>(this IEnumerable<T> array, bool newLines = false, Func<T, int, string> printFunc = null)
+        {
+            if (array == null)
+                return "null";
+
+            StringBuilder builder = new StringBuilder();
+            builder.Append("[");
+            bool added = false;
+            int cntr = -1;
+            foreach (T t in array)
+            {
+                cntr++;
+                added = true;
+                if (t == null)
+                    builder.Append("null");
+                else if (t is IEnumerable<T>)
+                    builder.Append(((IEnumerable<T>) t).PrettyPrint(printFunc:printFunc));
+                else
+                {
+                    if (printFunc == null)
+                        builder.Append(t);
+                    else
+                        builder.Append(printFunc(t, cntr));
                 }
 
                 builder.Append(newLines ? "\n " : ", ");
@@ -85,6 +136,16 @@ namespace SerializableActions.Internal
             }
 
             return true;
+        }
+
+        public static string PrettifyTypeName(string typeName)
+        {
+            if (typeName == "Single")
+                return "Float";
+            if (typeName == "Int32")
+                return "Int";
+
+            return typeName;
         }
     }
 }

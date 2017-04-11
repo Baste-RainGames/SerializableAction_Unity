@@ -24,15 +24,7 @@ namespace SerializableActions.Internal
         public string Name { get { return m_Name; } }
         public string NiceName
         {
-            get
-            {
-                if (Name == "Single")
-                    return "Float";
-                if (Name == "Int32")
-                    return "Int";
-
-                return Name;
-            }
+            get { return Util.PrettifyTypeName(Name); }
         }
 
         [SerializeField]
