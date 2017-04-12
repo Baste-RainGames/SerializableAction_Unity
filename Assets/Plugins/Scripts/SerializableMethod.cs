@@ -144,7 +144,7 @@ namespace SerializableActions.Internal
             return true;
         }
 
-        protected bool Equals(SerializableMethod other)
+        private bool Equals(SerializableMethod other)
         {
             return string.Equals(methodName, other.methodName) &&
                    Equals(containingType, other.containingType) &&

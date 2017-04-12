@@ -79,7 +79,9 @@ namespace SerializableActions.Internal
                 if (methodInvoker != null)
                     methodInvoker.Invoke(targetObject, argumentList);
                 else
+                {
                     fieldSetter.Invoke(targetObject, argumentList[0]);
+                }
             }
             else
                 Debug.LogWarning("Trying to invoke SerializableAction, but the serialized action target " + target.Name + " has been deleted!");
@@ -107,7 +109,7 @@ namespace SerializableActions.Internal
                 }
                 else
                 {
-                    TargetObject.GetType().DelegateForSetField(Target.TargetFieldSetter.FieldName);
+                    fieldSetter = TargetObject.GetType().DelegateForSetField(Target.TargetFieldSetter.FieldName);
                 }
             }
             catch (MissingMethodException)

@@ -47,6 +47,6 @@ namespace SerializableActions.Internal
 
         public bool IsMethod { get { return _isMethod; } }
         public string Name { get { return IsMethod ? TargetMethod.MethodName : TargetFieldSetter.FieldName; } }
-        public bool HasTarget { get { return IsMethod ? TargetMethod.MethodInfo != null : TargetFieldSetter.FieldInfo != null; } }
+        public bool HasTarget { get { return IsMethod ? TargetMethod.MethodInfo != null : !string.IsNullOrEmpty(TargetFieldSetter.FieldName); } }
     }
 }

@@ -72,7 +72,7 @@ namespace SerializableActions.Internal
 
         private static bool IsSerializable(FieldInfo field, int recusionDepth = 0)
         {
-            Debug.Log("Checking field " + field.Name);
+            //Debug.Log("Checking field " + field.Name);
 
             if (recusionDepth >= 7)
                 return false;

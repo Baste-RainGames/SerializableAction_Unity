@@ -39,13 +39,17 @@ namespace SerializableActions.Internal
             var action = (SerializableAction_Single) SerializedPropertyHelper.GetTargetObjectOfProperty(property);
 
             if (action.TargetObject == null)
+            {
                 return defaultHeight * 2; //label + object field
+            }
 
             //label + object field + method field. 1 less if there's no label
             var propHeightWithMethod = defaultHeight * (label == GUIContent.none ? 2 : 3);
             var target = action.Target;
             if (target == null || !target.HasTarget)
+            {
                 return propHeightWithMethod;
+            }
 
             if (!target.IsMethod)
             {
@@ -70,7 +74,7 @@ namespace SerializableActions.Internal
         /*
          * This OnGUI mostly uses the raw object instead of fiddling with the SerializedProperty.
          * This is because we need to handle things like raw System.Objects and arrays,
-         * both of which SerializedProperties can't handle properly.
+         * both of which SerializedProperties can't deal with.
          *
          * static so the list drawer can use it
          */
@@ -157,8 +161,6 @@ namespace SerializableActions.Internal
                 }
             }
 
-
-
             //Detect deleted method
             if (isDeleted)
                 methodAndFieldNames[0] = string.Format("Deleted {0}! Old name: {1}", target.IsMethod ? "Method" : "Field", target.Name);
@@ -185,7 +187,7 @@ namespace SerializableActions.Internal
                 //Selected a method or a setter
                 else if (newNameIdx < methods.Count + 1)
                 {
-                    var oldMethod = action.Target.TargetMethod;
+                    var oldMethod = action.Target.IsMethod ? action.Target.TargetMethod : null;
                     var targetMethod = methods[newNameIdx - 1];
                     action.Target.TargetMethod = targetMethod;
 
@@ -208,7 +210,12 @@ namespace SerializableActions.Internal
                 //Selected a field
                 else
                 {
-                    action.Target.TargetFieldSetter = fields[newNameIdx - methods.Count - 1];
+                    var targetField = fields[newNameIdx - methods.Count - 1];
+                    action.Target.TargetFieldSetter = targetField;
+                    var arg = new SerializableArgument(DefaultValueFinder.CreateDefaultFor(targetField.FieldType),
+                                                       targetField.FieldType,
+                                                       "Value");
+                    action.Arguments = new[] { arg };
                 }
             }
 
