@@ -46,6 +46,25 @@ A .dll version will (probably) be made available pretty soon.
 
 Generic methods are not supported. Supporting this is not hard from an implementation standpoint (it already works in the back-end), but figuring out how to draw a selector for the type parameters is harder. It will probably never be supported directly, but some other solution might show up (see Future plans)
 
+Parameters of cusom types are supported. So you can assign this method in the inspector:
+
+```c#
+public void PrintPerson(Person p) 
+{
+    Debug.Log(p.name + ", " + p.age);
+}
+
+[Serializable]
+public class Person 
+{
+    public string name;
+    public int age;
+}
+```
+But, if you create a CustomPropertyDrawer for Person, that drawer won't be used to draw the argument to PrintPerson. This is because the Person have to be serialized without Unity's serialization system, so there's no way to generate a SerializedProperty from the deserialized Person. Instead, there's a generic drawer function that draws all parameters. It's pretty good (it manages nested types!), but it's not customizable in any way.
+I might look into creating an API for making drawers that can both be used by a CustomPropertyDrawer and by SerializableAction to solve this.
+
+
 ## Future plans
 - Look into creating a SerializableFunc<T>, which has a return type. Like SerializableAction, you can assign any method to it, but this will only allow methods with the return type T. Since Unity doesn't support serializing generic fields, this will probably require subclassing a specific SerializableFunc
 - Look into support for Coroutine methods. It should be possible to assign StartCorotuine to a SerializableAction, but that would require creating a drop-down for which Coroutine to start, and also a way to define parameters to the coroutine.
