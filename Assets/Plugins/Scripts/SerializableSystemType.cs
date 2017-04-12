@@ -29,11 +29,8 @@ namespace SerializableActions.Internal
 
         [SerializeField]
         private string m_AssemblyQualifiedName;
-        public string AssemblyQualifiedName { get { return m_AssemblyQualifiedName; } }
-
         [SerializeField]
         private string m_AssemblyName;
-        public string AssemblyName { get { return m_AssemblyName; } }
 
         private Type m_SystemType;
         public Type SystemType
@@ -50,7 +47,7 @@ namespace SerializableActions.Internal
 
         private void GetSystemType()
         {
-            m_SystemType = Type.GetType(m_AssemblyQualifiedName);
+            m_SystemType = string.IsNullOrEmpty(m_AssemblyQualifiedName) ? null : Type.GetType(m_AssemblyQualifiedName);
         }
 
         public SerializableSystemType(Type _SystemType)
