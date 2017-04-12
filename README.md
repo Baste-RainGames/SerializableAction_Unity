@@ -6,6 +6,7 @@ A faster and more flexible replacement for Unity's UnityEvent.
 This project offers the SerializableAction type, which is a replacement for Unity's UnityEvent. Like UnityEvent, you can use SerializableAction to assign callbacks in the Unity inspector, and call them at runtime. There are some major improvements over UnityEvent:
 
 - Support for methods with any number of parameters. UnityEvent only supports methods with 0 or 1 parameters.
+- Support for setting fields. UnityEvent only supports methods and property setters.
 - Support for parameters with custom types (see Limitations). UnityEvent only supports a narrow range of predefined types.
 - A SerializableAction is about twice as fast to Invoke as the same UnityEvent.
 
@@ -43,8 +44,6 @@ A .dll version will (probably) be made available pretty soon.
 
 ## Limitations
 
-Fields are not supported for now. So while you can use a property setter, you can't set a public field. This should be fixed pretty soon.
-
 Generic methods are not supported. Supporting this is not hard from an implementation standpoint (it already works in the back-end), but figuring out how to draw a selector for the type parameters is harder. It will probably never be supported directly, but some other solution might show up (see Future plans)
 
 ## Future plans
@@ -66,15 +65,15 @@ This means that I will not want to extend the project to support complex feature
 All of these things would make the inspector large and cumbersome. If someone wants support for these things and are willing to do the work, I'd be happy to take the pull request if the feature either is encapsulated in it's own class, or is unlocked by adding a parameter to the SerializableAction (ie. [SupportDelayedCalls])
 
 ## Contributions
-I'll want to fix all of the things under Limitations that says "will be fixed", and do a proper cleanup/commenting pass before I start taking pull requests. This is to have a sensible, finished base to build from. I'll not really tell people about this before that's done, so if you read this before that, you're special I guess? Or you're reading through git logs ¯\_(ツ)_/¯
-
-After that, I'll be happy to accept pull requests. If you can
+I'll be happy to accept pull requests. If you can
 - Remove one of the .dll dependencies
 - Speed up Invoke
 
 I'll be really happy.
 
 I'd love to get feedback on the current state of things, bug reports, and suggestions for improving the interface. 
+
+I'd love to get code reviews. If you think something is hard to read, please open an issue!
 
 I'd also love to get feedback on platform support. The reflection stuff is happening on deserialization, so the code should work on eg. IOS, but it probably doesn't actually work on IOS. 
 
@@ -94,7 +93,7 @@ Used to handle serialization and deserialization of arguments:
 - Available at: https://github.com/jacobdufault/fullserializer
 
 ## SpacePuppy
-Code for extracting the actual object from a ScriptableObject has been extracted from the SpacePuppy framework by Dylan Engelman:
+Code for extracting the actual object from a ScriptableObject has been copied from the SpacePuppy framework by Dylan Engelman:
 - Available at: https://github.com/lordofduct/spacepuppy-unity-framework
 - License: https://github.com/lordofduct/spacepuppy-unity-framework#license
 - Specific code used is GetTargetObjectOfProperty and dependencies from: https://github.com/lordofduct/spacepuppy-unity-framework/blob/master/SpacepuppyBaseEditor/EditorHelper.cs
