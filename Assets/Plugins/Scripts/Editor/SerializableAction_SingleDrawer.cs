@@ -146,7 +146,7 @@ namespace SerializableActions.Internal
                 if (target.IsMethod)
                 {
                     fieldIdx = -1;
-                    methodIdx = methods.IndexOf(target.TargetMethod);
+                    methodIdx = target.HasTarget ? methods.IndexOf(target.TargetMethod) : -1;
                     nameIdx = methodIdx + 1;
 
                     isDeleted = methodIdx == -1 && !string.IsNullOrEmpty(target.TargetMethod.MethodName);
@@ -154,7 +154,7 @@ namespace SerializableActions.Internal
                 else
                 {
                     methodIdx = -1;
-                    fieldIdx = fields.IndexOf(target.TargetFieldSetter);
+                    fieldIdx = target.HasTarget ? fields.IndexOf(target.TargetFieldSetter) : -1;
                     nameIdx = fieldIdx == -1 ? 0 : fieldIdx + 1 + methods.Count;
 
                     isDeleted = fieldIdx == -1 && !string.IsNullOrEmpty(target.TargetFieldSetter.FieldName);
