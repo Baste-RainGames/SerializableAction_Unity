@@ -29,8 +29,6 @@ namespace SerializableActions.Internal
 
         [SerializeField]
         private string m_AssemblyQualifiedName;
-        [SerializeField]
-        private string m_AssemblyName;
 
         private Type m_SystemType;
         public Type SystemType
@@ -57,13 +55,12 @@ namespace SerializableActions.Internal
             m_SystemType = _SystemType;
             m_Name = _SystemType.Name;
             m_AssemblyQualifiedName = _SystemType.AssemblyQualifiedName;
-            m_AssemblyName = _SystemType.Assembly.FullName;
         }
 
         public override bool Equals(Object obj)
         {
             SerializableSystemType temp = obj as SerializableSystemType;
-            if ((object) temp == null)
+            if (temp == null)
             {
                 return false;
             }
@@ -86,7 +83,7 @@ namespace SerializableActions.Internal
             }
 
             // If one is null, but not both, return false.
-            if (((object) a == null) || ((object) b == null))
+            if (a == null || b == null)
             {
                 return false;
             }
