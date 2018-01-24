@@ -10,6 +10,8 @@ This project offers the SerializableAction type, which is a replacement for Unit
 - Support for parameters with custom types (see Limitations). UnityEvent only supports a narrow range of predefined types.
 - A SerializableAction is about twice as fast to Invoke as the same UnityEvent.
 
+NOTE! AOT platforms (ISO, Consoles, anything that uses IL2CPP) are not supported right now. The plan is to introduce a fix when IL2CPP for PC becomes available, so I can test the fix. Sorry for the inconvenience!
+
 ## Usage
 
 SerializableAction is designed to work exactly like UnityEvent. You declare a public (or [SerializeField] private) field of the SerializableAction type, assign method(s) to the field in the inspector, and invoke the event at runtime with the Invoke() method.
